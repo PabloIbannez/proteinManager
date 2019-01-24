@@ -9,7 +9,7 @@ int main(int argc,char *argv[]){
     pdb.loadPDB("1aki.pdb");
     
     std::cout << computeCentroid(pdb) << std::endl;
-    std::cout << computeCenterOfMass(pdb) << std::endl;
+    //std::cout << computeCenterOfMass(pdb) << std::endl;
     
     return EXIT_SUCCESS;
 }

@@ -8,11 +8,8 @@
 
 namespace proteinManager{
     
-    template <class T>
-    real3 computeCentroid(T& in){ return {0,0,0};}
-    
-    template<>
-    real3 computeCentroid<RESIDUE>(RESIDUE& res){
+
+    real3 computeCentroid(RESIDUE& res){
         int atmCount = 0;
         real3 centroid = {0,0,0};
         for(ATOM& atm : res.atom()){
@@ -22,8 +19,7 @@ namespace proteinManager{
         return centroid/atmCount;
     }
     
-    template<>
-    real3 computeCentroid<CHAIN>(CHAIN& ch){
+    real3 computeCentroid(CHAIN& ch){
         int atmCount = 0;
         real3 centroid = {0,0,0};
         for(RESIDUE& res : ch.residue()){
@@ -33,9 +29,8 @@ namespace proteinManager{
         }}
         return centroid/atmCount;
     }
-    
-    template<>
-    real3 computeCentroid<MODEL>(MODEL& mdl){
+
+    real3 computeCentroid(MODEL& mdl){
         int atmCount = 0;
         real3 centroid = {0,0,0};
         for(CHAIN& ch : mdl.chain()){
@@ -47,8 +42,7 @@ namespace proteinManager{
         return centroid/atmCount;
     }
     
-    template<>
-    real3 computeCentroid<STRUCTURE>(STRUCTURE& st){
+    real3 computeCentroid(STRUCTURE& st){
         int atmCount = 0;
         real3 centroid = {0,0,0};
         for(MODEL& mdl : st.model()){

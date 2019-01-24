@@ -6,12 +6,8 @@
 #include <proteinManager/proteinManager.hpp>
 
 namespace proteinManager{
-    
-    template <class T>
-    real3 computeCenterOfMass(T& in){ return {0,0,0};}
-    
-    template<>
-    real3 computeCenterOfMass<RESIDUE>(RESIDUE& res){
+
+    real3 computeCenterOfMass(RESIDUE& res){
         real totalMass = 0;
         real3 centerOfMass = {0,0,0};
         for(ATOM& atm : res.atom()){
@@ -21,8 +17,7 @@ namespace proteinManager{
         return centerOfMass/totalMass;
     }
     
-    template<>
-    real3 computeCenterOfMass<CHAIN>(CHAIN& ch){
+    real3 computeCenterOfMass(CHAIN& ch){
         real totalMass = 0;
         real3 centerOfMass = {0,0,0};
         for(RESIDUE& res : ch.residue()){
@@ -33,8 +28,7 @@ namespace proteinManager{
         return centerOfMass/totalMass;
     }
     
-    template<>
-    real3 computeCenterOfMass<MODEL>(MODEL& mdl){
+    real3 computeCenterOfMass(MODEL& mdl){
         real totalMass = 0;
         real3 centerOfMass = {0,0,0};
         for(CHAIN& ch : mdl.chain()){
@@ -46,8 +40,7 @@ namespace proteinManager{
         return centerOfMass/totalMass;
     }
     
-    template<>
-    real3 computeCenterOfMass<STRUCTURE>(STRUCTURE& st){
+    real3 computeCenterOfMass(STRUCTURE& st){
         real totalMass = 0;
         real3 centerOfMass = {0,0,0};
         for(MODEL& mdl : st.model()){
