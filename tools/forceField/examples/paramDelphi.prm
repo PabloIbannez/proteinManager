@@ -1,0 +1,17 @@
+scale=2.0
+perfil=70.0
+in(modpdb4, file="1akiClear.pqr",format=pqr)
+!in(pdb,file="1aki.pdb")
+!in(siz,file="amber.siz")
+!in(crg,file="amber.crg")
+indi=2.0
+exdi=80.0
+prbrad=1.4
+salt=0.10
+bndcon=2
+maxc=0.0001
+linit=800
+out(phi,file="phimap1aki.cube",format = cube)
+!out(eps,file="epsmap.txt")
+energy(s,c,g)
+
