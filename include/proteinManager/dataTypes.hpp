@@ -21,6 +21,11 @@ namespace proteinManager {
         int z;
     };
     
+    struct real2 {
+        real x;
+        real y;
+    };
+    
     struct real3 {
         real x;
         real y;

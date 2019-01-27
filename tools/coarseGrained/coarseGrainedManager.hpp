@@ -394,6 +394,12 @@ namespace coarseGrainedManager{
                         
 						resOut.atom(bd).setAtomCoord(pos);
 						resOut.atom(bd).setAtomCharge(chg);
+                        
+                        //Common properties
+                        resOut.atom(bd).setAtomAltLoc(" ");
+                        resOut.atom(bd).setAtomOccupancy(1);
+                        resOut.atom(bd).setAtomTempFactor(0);
+                        resOut.atom(bd).setAtomElement("");
 						
 					}
 					

@@ -6,12 +6,12 @@ int main(){
     proteinManager::coarseGrainedManager::coarseGrainedGenerator cg;
     
     cg.loadElementsData("./elements/element_Types.prm");
-    cg.loadCGmodel("./coarseGrainedModels/MARRINK/aminoAcid2bead_MARRINK.map","./coarseGrainedModels/MARRINK/bead2atom_MARRINK.map");
+    cg.loadCGmodel("./coarseGrainedModels/RES2BEAD/aminoAcid2bead_RES2BEAD.map","./coarseGrainedModels/RES2BEAD/bead2atom_RES2BEAD.map");
     
     ////////////////////////////////////////////
     
-    std::string pdbInputPath = "./examples/3apgP.pqr";
-    std::string pdbOutputPath = "./examples/3apgCG_MARRINK.pqr";
+    std::string pdbInputPath = "./examples/streptavidin_1mk5.pqr";
+    std::string pdbOutputPath = "./examples/streptavidin_1mk5_CG.pdb";
     
     proteinManager::STRUCTURE pdbInput;
     proteinManager::STRUCTURE pdbOutput;
@@ -26,7 +26,7 @@ int main(){
     
     std::ofstream outPutFile;
     outPutFile.open(pdbOutputPath);
-    pdbOutput.setOuputFormat(proteinManager::DATA_FORMAT::PQR);
+    pdbOutput.setOuputFormat(proteinManager::DATA_FORMAT::PDB);
     
     outPutFile << pdbOutput << std::endl;
     

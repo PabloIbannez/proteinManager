@@ -5,19 +5,30 @@
 
 namespace proteinManager{
     
-    struct bondInfo{
+    struct bond{
             
-            ATOM& bondedParticle1;
-            ATOM& bondedParticle2;
+            std::shared_ptr<ATOM> ptr1;
+            std::shared_ptr<ATOM> ptr2;
+            
+            double r0;
             double k;
-    };
+            
+    };           
+    
+    template<class enmModel>
+    class enm;
+    
+    template <class T>
+    std::ostream& operator<<(std::ostream& os, const enm<T>& enmOut);
         
     template<class enmModel>
     class enm{
         
+            friend std::ostream& operator<< <>( std::ostream& os, const enm& enmOut );
+        
         private:
             
-            std::vector<bondInfo> network;
+            std::vector<bond> network;
         
         public:
             
@@ -42,76 +53,92 @@ namespace proteinManager{
                 }}}}
                 
                 for(int i=0; i < atomVector.size(); i++){
-                for(int j=0; j < atomVector.size(); j++){
+                for(int j=i+1; j < atomVector.size(); j++){
                     
-                    if (i != j){
-                        double currentK = ENM.springConstant(*atomVector[i],*atomVector[j]);
-                        
-                        if(currentK > 0){
-                            network.push_back({*atomVector[i],*atomVector[j],currentK});
-                        }
+                    bond bd = ENM.computeBond(atomVector[i],atomVector[j]);
+                    
+                    //std::cout << bond.ptr1.getAtomName() << std::endl;
+                    //std::cin.get();
+                    
+                    if(bd.k > 0){
+                        network.push_back(bd);
                     }
                 }}
                 
             }
-            
-            
-        
     };
     
-    namespace enm_models{
+    template <class T>
+    std::ostream& operator<<(std::ostream& os, const enm<T>& enmOut){
         
-        struct caOrellana{
-            
-            double rcut;
-            
-            int M = 3;
-            
-            double Cseq = 60;
-            double Ccart = 6;
-            
-            int n_seq = 2;
-            int n_cart = 6;
-            
-            const char* info = "units are ...";
-            
-            bool init(STRUCTURE& str){ 
-                
-                rcut = 17;
-                return true;
-            }
-            bool init(MODEL&     str){ return true;}
-            bool init(CHAIN&     str){ return true;}
-            bool init(RESIDUE&   str){ return true;}
-            
-            double springConstant(ATOM& atm1, ATOM& atm2){
-                
-                if(atm1.getAtomName() != "CA" or atm2.getAtomName() != "CA"){ return 0;}
-                
-                int S12 = abs(atm1.getParentResidue()->getResSeq()-atm2.getParentResidue()->getResSeq());
-                
-                if(S12 <= M){
-                    
-                    return double(Cseq)/(pow(S12,n_seq));
-                    
-                } else {
-                    
-                    real3 r12 = atm1.getAtomCoord()-atm2.getAtomCoord();
-                    double r = sqrt(dot(r12,r12));
-                    
-                    if(r <= rcut){
-                        //check pow(Ccart/r,n_cart)
-                        std::cout << double(Ccart)/(pow(r,n_cart)) << std::endl;
-                        return double(Ccart)/(pow(r,n_cart));
-                    } else {
-                        return 0;
-                    }
-                }
-            }
-        };
+        os << enmOut.network.size() << std::endl;
         
+        for(const bond& bd : enmOut.network){
+            
+            ///////////////////////////////////////////
+            
+            os << std::left << std::fixed            <<
+            std::setw(6) << "ATOM"                   <<
+            std::right                               <<
+            std::setw(5) << bd.ptr1->getAtomSerial() <<
+            " "                                   ;
+        
+            if(bd.ptr1->getAtomName().size() < 4) {
+                os << std::left << std::fixed <<" "   <<
+                std::setw(3) << bd.ptr1->getAtomName() ;
+            } else {
+                os << std::left << std::fixed         <<
+                std::setw(4) << bd.ptr1->getAtomName() ;
+            }
+        
+            os << std::left << std::fixed             <<
+            std::setw(1) << bd.ptr1->getAtomAltLoc()  <<
+            std::setw(3) << bd.ptr1->getResName()     <<
+            " "                                       <<
+            std::setw(1) << bd.ptr1->getChainId()     <<
+            std::right                                <<
+            std::setw(4) << bd.ptr1->getResSeq()      <<
+            std::setw(1) << bd.ptr1->getResInsCode()  <<
+            "   "                                     ;
+            
+            ///////////////////////////////////////////
+            
+            os << std::left << std::fixed            <<
+            std::setw(6) << "ATOM"                   <<
+            std::right                               <<
+            std::setw(5) << bd.ptr2->getAtomSerial() <<
+            " "                                   ;
+            
+            if(bd.ptr2->getAtomName().size() < 4) {
+                os << std::left << std::fixed <<" "   <<
+                std::setw(3) << bd.ptr2->getAtomName() ;
+            } else {
+                os << std::left << std::fixed         <<
+                std::setw(4) << bd.ptr2->getAtomName() ;
+            }
+            
+            os << std::left << std::fixed             <<
+            std::setw(1) << bd.ptr2->getAtomAltLoc()  <<
+            std::setw(3) << bd.ptr2->getResName()     <<
+            " "                                       <<
+            std::setw(1) << bd.ptr2->getChainId()     <<
+            std::right                                <<
+            std::setw(4) << bd.ptr2->getResSeq()      <<
+            std::setw(1) << bd.ptr2->getResInsCode()  <<
+            "   "                                     ;
+            
+            ////////////////////////////////////////////
+            
+            os << std::setprecision(6)         <<
+                  std::setw(12) << bd.r0       <<
+                  std::setw(12) << bd.k        << std::endl;
+            
+        }
+        
+        return os;
     }
-
 }
+
+#include "enm_models.hpp"
 
 #endif
