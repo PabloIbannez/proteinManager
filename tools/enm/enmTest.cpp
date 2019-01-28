@@ -7,18 +7,18 @@ int main(){
     pdb.setSerialOverWrite(true);
     pdb.setResSeqOverWrite(true);
     
-    pdb.loadPDB("streptavidin_1mk5_CG.pdb");
+    pdb.loadPDB("./examples/streptavidin_4jo6_CG.pdb");
     
     
-    proteinManager::enm<proteinManager::enm_models::caOrellana> enmTest;
+    proteinManager::enm<proteinManager::enm_models::REACH> enmTest;
     
     enmTest.computeENM(pdb);
     
-    //std::cout << pdb << std::endl;
+    pdb.setOutputFormat(proteinManager::DATA_FORMAT::XYZ);
     
+    std::cout << pdb << std::endl;
     std::cout << enmTest << std::endl;
     
-    //std::cout << pdb << std::endl;
     
     return EXIT_SUCCESS;
 }

@@ -28,15 +28,17 @@ namespace proteinManager{
         
         private:
             
+            std::shared_ptr<enmModel> ENM;
+            
             std::vector<bond> network;
         
         public:
             
             void computeENM(STRUCTURE& strIn){
                 
-                enmModel ENM;
+                ENM = std::make_shared<enmModel>();
                 
-                if(!ENM.init(strIn)){
+                if(!ENM->init(strIn)){
                     std::stringstream ss;
                     ss << "The current structure is not compatible with the selected elastic network model";
                     throw std::runtime_error(ss.str());
@@ -55,10 +57,97 @@ namespace proteinManager{
                 for(int i=0; i < atomVector.size(); i++){
                 for(int j=i+1; j < atomVector.size(); j++){
                     
-                    bond bd = ENM.computeBond(atomVector[i],atomVector[j]);
+                    bond bd = ENM->computeBond(atomVector[i],atomVector[j]);
                     
-                    //std::cout << bond.ptr1.getAtomName() << std::endl;
-                    //std::cin.get();
+                    if(bd.k > 0){
+                        network.push_back(bd);
+                    }
+                }}
+                
+            }
+            
+            void computeENM(MODEL& mdlIn){
+                
+                ENM = std::make_shared<enmModel>();
+                
+                if(!ENM->init(mdlIn)){
+                    std::stringstream ss;
+                    ss << "The current structure is not compatible with the selected elastic network model";
+                    throw std::runtime_error(ss.str());
+                }
+                
+                //Buffer atom vector
+                std::vector<std::shared_ptr<proteinManager::ATOM>> atomVector;
+                
+                for(CHAIN&   ch  : mdlIn.chain()  ){
+                for(RESIDUE& res : ch.residue()  ){
+                for(ATOM&    atm : res.atom()    ){
+                    atomVector.push_back(std::make_shared<proteinManager::ATOM>(atm));
+                }}}
+                
+                for(int i=0; i < atomVector.size(); i++){
+                for(int j=i+1; j < atomVector.size(); j++){
+                    
+                    bond bd = ENM->computeBond(atomVector[i],atomVector[j]);
+                    
+                    if(bd.k > 0){
+                        network.push_back(bd);
+                    }
+                }}
+                
+            }
+            
+            void computeENM(CHAIN& chIn){
+                
+                ENM = std::make_shared<enmModel>();
+                
+                if(!ENM->init(chIn)){
+                    std::stringstream ss;
+                    ss << "The current structure is not compatible with the selected elastic network model";
+                    throw std::runtime_error(ss.str());
+                }
+                
+                //Buffer atom vector
+                std::vector<std::shared_ptr<proteinManager::ATOM>> atomVector;
+                
+                for(RESIDUE& res : chIn.residue()  ){
+                for(ATOM&    atm : res.atom()    ){
+                    atomVector.push_back(std::make_shared<proteinManager::ATOM>(atm));
+                }}
+                
+                for(int i=0; i < atomVector.size(); i++){
+                for(int j=i+1; j < atomVector.size(); j++){
+                    
+                    bond bd = ENM->computeBond(atomVector[i],atomVector[j]);
+                    
+                    if(bd.k > 0){
+                        network.push_back(bd);
+                    }
+                }}
+                
+            }
+            
+            void computeENM(RESIDUE& resIn){
+                
+                ENM = std::make_shared<enmModel>();
+                
+                if(!ENM->init(resIn)){
+                    std::stringstream ss;
+                    ss << "The current structure is not compatible with the selected elastic network model";
+                    throw std::runtime_error(ss.str());
+                }
+                
+                //Buffer atom vector
+                std::vector<std::shared_ptr<proteinManager::ATOM>> atomVector;
+                
+                for(ATOM&    atm : resIn.atom()    ){
+                    atomVector.push_back(std::make_shared<proteinManager::ATOM>(atm));
+                }
+                
+                for(int i=0; i < atomVector.size(); i++){
+                for(int j=i+1; j < atomVector.size(); j++){
+                    
+                    bond bd = ENM->computeBond(atomVector[i],atomVector[j]);
                     
                     if(bd.k > 0){
                         network.push_back(bd);
@@ -71,10 +160,24 @@ namespace proteinManager{
     template <class T>
     std::ostream& operator<<(std::ostream& os, const enm<T>& enmOut){
         
+        if(enmOut.network.size() <= 0){
+            std::stringstream ss;
+            ss << "No network has been generated";
+            throw std::runtime_error(ss.str());
+        }
+        
+        os << enmOut.ENM->info;
         os << enmOut.network.size() << std::endl;
         
         for(const bond& bd : enmOut.network){
             
+            os << std::setw(5) << bd.ptr1->getAtomSerial() <<
+                  std::setw(5) << bd.ptr2->getAtomSerial() <<
+                  std::setprecision(6)                     <<
+                  std::setw(12) << bd.r0                   <<
+                  std::setw(12) << bd.k                    << std::endl;
+            
+            /*
             ///////////////////////////////////////////
             
             os << std::left << std::fixed            <<
@@ -99,6 +202,11 @@ namespace proteinManager{
             std::right                                <<
             std::setw(4) << bd.ptr1->getResSeq()      <<
             std::setw(1) << bd.ptr1->getResInsCode()  <<
+            "   "                                     <<
+            std::setprecision(3)                      <<
+            std::setw(8) << bd.ptr1->getAtomCoord().x <<
+            std::setw(8) << bd.ptr1->getAtomCoord().y <<
+            std::setw(8) << bd.ptr1->getAtomCoord().z <<
             "   "                                     ;
             
             ///////////////////////////////////////////
@@ -125,6 +233,11 @@ namespace proteinManager{
             std::right                                <<
             std::setw(4) << bd.ptr2->getResSeq()      <<
             std::setw(1) << bd.ptr2->getResInsCode()  <<
+            "   "                                     <<
+            std::setprecision(3)                      <<
+            std::setw(8) << bd.ptr2->getAtomCoord().x <<
+            std::setw(8) << bd.ptr2->getAtomCoord().y <<
+            std::setw(8) << bd.ptr2->getAtomCoord().z <<
             "   "                                     ;
             
             ////////////////////////////////////////////
@@ -132,6 +245,7 @@ namespace proteinManager{
             os << std::setprecision(6)         <<
                   std::setw(12) << bd.r0       <<
                   std::setw(12) << bd.k        << std::endl;
+            */
             
         }
         

@@ -267,6 +267,11 @@ namespace proteinManager {
             a.getAtomCoord() << " " <<
             a.getAtomCharge() ;
             break;
+        case XYZ:
+            os << a.getAtomSerial() << " " << 
+            std::left << std::fixed << std::setprecision(6) <<
+            a.getAtomCoord();
+            break;
     }
     
     

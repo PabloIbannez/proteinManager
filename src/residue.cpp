@@ -127,6 +127,7 @@ namespace proteinManager {
         case PDRS:
         case SP:
         case SPQ:
+        case XYZ:
     
             for(i = 0; i < res.atomVector.size(); i++) {
                 if( i != res.atomVector.size()-1) {

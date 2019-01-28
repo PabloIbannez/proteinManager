@@ -69,7 +69,7 @@ namespace proteinManager {
         }*/
         
         //Internal options setting
-        void        setOuputFormat(DATA_FORMAT output);
+        void        setOutputFormat(DATA_FORMAT output);
         void        setSerialOverWrite(bool option);
         void        setResSeqOverWrite(bool option);
         

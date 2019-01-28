@@ -5,7 +5,7 @@
 
 namespace proteinManager {
 
-    enum DATA_FORMAT {PDB,PDBQ,PQR,PDRS,SP,SPQ,GRO};
+    enum DATA_FORMAT {PDB,PDBQ,PQR,PDRS,SP,SPQ,GRO,XYZ};
     
     //#define DOUBLE_PRECISION
     

@@ -10,8 +10,8 @@ int main(){
     
     ////////////////////////////////////////////
     
-    std::string pdbInputPath = "./examples/streptavidin_1mk5.pqr";
-    std::string pdbOutputPath = "./examples/streptavidin_1mk5_CG.pdb";
+    std::string pdbInputPath = "./examples/streptavidin_4jo6.pqr";
+    std::string pdbOutputPath = "./examples/streptavidin_4jo6_CG.pdb";
     
     proteinManager::STRUCTURE pdbInput;
     proteinManager::STRUCTURE pdbOutput;
@@ -26,7 +26,7 @@ int main(){
     
     std::ofstream outPutFile;
     outPutFile.open(pdbOutputPath);
-    pdbOutput.setOuputFormat(proteinManager::DATA_FORMAT::PDB);
+    pdbOutput.setOutputFormat(proteinManager::DATA_FORMAT::PDB);
     
     outPutFile << pdbOutput << std::endl;
     

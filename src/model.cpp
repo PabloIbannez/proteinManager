@@ -139,6 +139,7 @@ namespace proteinManager {
         case PQR:
         case SP:
         case SPQ:
+        case XYZ:
         case PDRS:
     
             for(size_t i = 0; i != md.chainVector.size(); i++) {

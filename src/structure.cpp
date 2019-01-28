@@ -3,7 +3,7 @@
 
 namespace proteinManager {
 
-    void STRUCTURE::setOuputFormat(DATA_FORMAT output) {
+    void STRUCTURE::setOutputFormat(DATA_FORMAT output) {
         outputFormat = output;
     }
     
@@ -651,6 +651,7 @@ namespace proteinManager {
     
         case SP:
         case SPQ:
+        case XYZ:
             for(size_t i = 0; i < structure.modelVector.size()-1; i++) {
                 os << "#" << std::endl;
                 os << structure.modelVector[i] << std::endl;

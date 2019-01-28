@@ -377,18 +377,22 @@ namespace coarseGrainedManager{
 						
 						//TODO, more generic
 						
+                        ////////////////////////////////////////////////
+                        
 						pos = {0,0,0};
 						chg = 0;
 						totalMass = 0;
 						
 						for(std::string const & atom : beadTypes[bd]->atomComponents){
-						
-							pos += res.atom(atom).getAtomCoord()*elementsTypes[atom.substr(0,1)]->mass;
+                            
 							chg += res.atom(atom).getAtomCharge();
 							totalMass += elementsTypes[atom.substr(0,1)]->mass;
 						}
 						
-						pos /= totalMass;
+						pos = res.atom("CA").getAtomCoord();
+                        
+                        ////////////////////////////////////////////////
+                        
 						resOut.addAtom(addedAtomCount,bd);
 						addedAtomCount++;
                         

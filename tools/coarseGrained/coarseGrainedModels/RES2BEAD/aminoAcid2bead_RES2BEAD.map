@@ -1,5 +1,6 @@
 [ALA]
 ALA
+ALAN
 [ARG]
 ARG
 [ASN]
@@ -19,8 +20,10 @@ GLUN
 GLH
 [GLN]
 GLN
+GLNC
 [GLY]
 GLY
+GLYN
 [HID]
 HID
 [HIE]
@@ -42,6 +45,7 @@ MET
 PHE
 [PRO]
 PRO
+PROC
 [SER]
 SER
 [THR]

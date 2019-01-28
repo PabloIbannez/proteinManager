@@ -168,6 +168,7 @@ namespace proteinManager {
             break;
         case SP:
         case SPQ:
+        case XYZ:
     
             for(i = 0; i < chain.residueVector.size()-1 ; i++) {
                 os << chain.residueVector[i] << std::endl;
