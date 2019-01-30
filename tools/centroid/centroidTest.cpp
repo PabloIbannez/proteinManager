@@ -1,4 +1,4 @@
-#include <proteinManager/proteinManager.hpp>
+#include <proteinManager.hpp>
 #include "centroid.hpp"
 #include "centerOfMass.hpp"
 

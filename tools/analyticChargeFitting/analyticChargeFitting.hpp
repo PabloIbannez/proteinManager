@@ -13,7 +13,7 @@
 #include <sstream>
 #include <algorithm>
 
-#include <proteinManager/proteinManager.hpp>
+#include <proteinManager.hpp>
 
 #include <eigen3/Eigen/Eigen>
 

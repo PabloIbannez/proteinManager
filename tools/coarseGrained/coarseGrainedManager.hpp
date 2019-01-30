@@ -10,7 +10,7 @@
 #include <sstream>
 #include <algorithm>
 
-#include "proteinManager.hpp"
+#include <proteinManager.hpp>
 
 namespace proteinManager{
 namespace coarseGrainedManager{

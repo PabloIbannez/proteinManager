@@ -10,7 +10,7 @@
 #include <type_traits>
 #include <tuple>
 
-#include <proteinManager/proteinManager.hpp>
+#include <proteinManager.hpp>
 #include "forceFieldManager.hpp"
 #include "fieldComputing.cuh"
 #include <integration3D/src/pIntegrator.cuh>
@@ -20,7 +20,7 @@
 
 #include <cub/cub.cuh>
 
-#include <Eigen/Eigen>
+#include <eigen3/Eigen/Eigen>
 
 namespace proteinManager {
 namespace ffManager{

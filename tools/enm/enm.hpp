@@ -1,7 +1,7 @@
 #ifndef ENM_HPP
 #define ENM_HPP
 
-#include <proteinManager/proteinManager.hpp>
+#include <proteinManager.hpp>
 
 namespace proteinManager{
     

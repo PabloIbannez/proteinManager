@@ -6,8 +6,8 @@
 #include <fstream>
 #include <sstream>
 
-#include <proteinManager/proteinManager.hpp>
-#include <integration3D/src/pIntegrator.cuh>
+#include <proteinManager.hpp>
+#include "./integration3D/src/pIntegrator.cuh"
 
 namespace proteinManager {
 namespace fieldComputing{
