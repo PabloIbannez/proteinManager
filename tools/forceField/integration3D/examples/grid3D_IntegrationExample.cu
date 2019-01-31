@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include "../src/pIntegrator.cuh"
+#include "../pIntegrator.cuh"
 
 struct functionTest{
     

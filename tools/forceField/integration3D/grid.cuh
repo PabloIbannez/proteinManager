@@ -12,6 +12,7 @@
 #define GRID_CUH
 
 #include <iostream>
+#include <fstream>
 #include <sstream>
 
 #include <thrust/host_vector.h>

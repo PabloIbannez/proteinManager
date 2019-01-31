@@ -1,21 +1,21 @@
 shared_proteinManager: dataTypes structure model chain residue atom
-	g++-8 -shared -o libproteinManager.so dataTypes.o structure.o model.o chain.o residue.o atom.o
+	g++-7 -shared -o libproteinManager.so dataTypes.o structure.o model.o chain.o residue.o atom.o
 	rm *.o
 
 dataTypes:
-	g++-8 -fPIC -O3 -std=c++17 -I ../include -c ../src/dataTypes.cpp -o dataTypes.o
+	g++-7 -fPIC -O3 -std=c++17 -I ../include -c ../src/dataTypes.cpp -o dataTypes.o
 
 structure:
-	g++-8 -fPIC -O3 -std=c++17 -I ../include -c ../src/structure.cpp -o structure.o
+	g++-7 -fPIC -O3 -std=c++17 -I ../include -c ../src/structure.cpp -o structure.o
 
 model:
-	g++-8 -fPIC -O3 -std=c++17 -I ../include -c ../src/model.cpp -o model.o
+	g++-7 -fPIC -O3 -std=c++17 -I ../include -c ../src/model.cpp -o model.o
 
 chain:
-	g++-8 -fPIC -O3 -std=c++17 -I ../include -c ../src/chain.cpp -o chain.o
+	g++-7 -fPIC -O3 -std=c++17 -I ../include -c ../src/chain.cpp -o chain.o
 
 residue:
-	g++-8 -fPIC -O3 -std=c++17 -I ../include -c ../src/residue.cpp -o residue.o
+	g++-7 -fPIC -O3 -std=c++17 -I ../include -c ../src/residue.cpp -o residue.o
 
 atom:
-	g++-8 -fPIC -O3 -std=c++17 -I ../include -c ../src/atom.cpp -o atom.o
+	g++-7 -fPIC -O3 -std=c++17 -I ../include -c ../src/atom.cpp -o atom.o

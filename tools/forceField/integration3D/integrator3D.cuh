@@ -27,9 +27,9 @@
 
 //#define DEBUG
 
-#include "../vectorData.cuh"
-#include "../grid.cuh"
-#include "../saruprng.cuh"
+#include "vectorData.cuh"
+#include "grid.cuh"
+#include "saruprng.cuh"
 
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
@@ -255,7 +255,6 @@ namespace integrator3D_grid_ns{
                 //gpuErrchk( cudaDeviceSynchronize() );
                 
                 cudaStreamSynchronize(integratorStream);
-                //std::cin.get();
 				
 				///////////////////////////////////////////////////////
 				
