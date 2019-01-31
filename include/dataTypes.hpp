@@ -15,6 +15,12 @@ namespace proteinManager {
     typedef float real;
     #endif
     
+    #ifdef __CUDACC__
+        #define CUDA_TOKENS __host__ __device__ inline
+    #else
+        #define CUDA_TOKENS
+    #endif
+    
     struct int3 {
         int x;
         int y;
@@ -34,16 +40,16 @@ namespace proteinManager {
         friend std::ostream& operator<<(std::ostream& os, const real3& r);
     };
     
-    real3 operator +(const real3 &a, const real3 &b);
-    real3 operator +(const real3 &a, const real &b);
-    real3 operator -(const real3 &a, const real3 &b);
-    real3 operator -(const real3 &a, const real  &b);
-    real3 operator /(const real3 &a, const real &b);
-    real3 operator *(const real3 &a, const real &b);
-    void operator +=( real3 &a, const real3 &b);
-    void operator /=( real3 &a, const real &b);
+    CUDA_TOKENS real3 operator +(const real3 &a, const real3 &b);
+    CUDA_TOKENS real3 operator +(const real3 &a, const real &b);
+    CUDA_TOKENS real3 operator -(const real3 &a, const real3 &b);
+    CUDA_TOKENS real3 operator -(const real3 &a, const real  &b);
+    CUDA_TOKENS real3 operator /(const real3 &a, const real &b);
+    CUDA_TOKENS real3 operator *(const real3 &a, const real &b);
+    CUDA_TOKENS void operator +=( real3 &a, const real3 &b);
+    CUDA_TOKENS void operator /=( real3 &a, const real &b);
     
-    real dot(const real3 &a,const real3 &b);
+    CUDA_TOKENS real dot(const real3 &a,const real3 &b);
     
     std::ostream& operator<<(std::ostream& os, const real3& r);
     
