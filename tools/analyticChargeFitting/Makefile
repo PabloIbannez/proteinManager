@@ -1,2 +1,2 @@
 ch_fitting:
-	g++-7 analyticChargeFittingTest.cpp -std=c++17 -O3 -L ../../shared -I ../../include -lproteinManager
+	g++ analyticChargeFittingTest.cpp -std=c++11 -O3 -L ../../shared -I ../../include -lproteinManager

@@ -27,7 +27,7 @@ namespace proteinManager {
     
       private:
       
-        std::map<std::string, std::any> atomProperties;
+        std::map<std::string, boost::any> atomProperties;
     
         RESIDUE* parentResidue_;
     

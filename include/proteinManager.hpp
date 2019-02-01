@@ -8,13 +8,13 @@
 #include <sstream>
 #include <vector>
 #include <map>
-#include <any>
 #include <algorithm>
 #include <functional>
 #include <cmath>
 #include <regex>
 
 #include <boost/ptr_container/ptr_vector.hpp>
+#include <boost/any.hpp>
 
 #include "dataTypes.hpp"
 #include "compoundsProperties.hpp"

@@ -16,7 +16,7 @@ namespace proteinManager {
     #endif
     
     #ifdef __CUDACC__
-        #define CUDA_TOKENS __host__ __device__ inline
+        #define CUDA_TOKENS __host__ __device__
     #else
         #define CUDA_TOKENS
     #endif

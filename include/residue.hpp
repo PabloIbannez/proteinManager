@@ -29,7 +29,7 @@ class RESIDUE {
 
   private:
     
-    std::map<std::string, std::any> residueProperties;
+    std::map<std::string, boost::any> residueProperties;
     
     CHAIN* parentChain_;
 

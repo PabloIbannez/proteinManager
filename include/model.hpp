@@ -30,7 +30,7 @@ class MODEL {
 
   private:
   
-    std::map<std::string, std::any> modelProperties;
+    std::map<std::string, boost::any> modelProperties;
     STRUCTURE* parentStructure_;
 
     boost::ptr_vector<CHAIN> chainVector;

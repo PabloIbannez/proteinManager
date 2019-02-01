@@ -68,7 +68,7 @@ namespace proteinManager {
     
     #define GET_CHAIN_PROPERTY_IMPL_T(type,Name,name)  GET_CHAIN_PROPERTY_IMPL_R(type,Name,name)
     #define GET_CHAIN_PROPERTY_IMPL_R(type,Name,name)  type CHAIN::getChain##Name() const{ \
-                                                                                         try { return std::any_cast<type>(chainProperties.at(#name));} \
+                                                                                         try { return boost::any_cast<type>(chainProperties.at(#name));} \
                                                                                          catch (const std::out_of_range& e){ \
                                                                                              std::stringstream ss; \
                                                                                              ss << "ERROR ( " << e.what() << " ). The property \"" << #name << "\" has not been added previously." ; \

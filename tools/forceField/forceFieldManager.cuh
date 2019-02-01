@@ -13,7 +13,7 @@
 #include <proteinManager.hpp>
 #include "forceFieldManager.hpp"
 #include "fieldComputing.cuh"
-#include <integration3D/src/pIntegrator.cuh>
+#include "./integration3D/integrator3D.cuh"
 
 #include <thrust/host_vector.h>
 #include <thrust/device_vector.h>
@@ -22,15 +22,19 @@
 
 #include <eigen3/Eigen/Eigen>
 
-namespace proteinManager {
+#include "potential.cuh"
+
+
+namespace proteinManager{
 namespace ffManager{
     
-    template <class potential>
+    template <class refPotType,class objPotType>
     class forceFieldFitter{
 	
 		private:
 		
-        potential pot_;
+        refPotType refPot;
+        objPotType objPot;
         
 		proteinManager::STRUCTURE& refStruct_;
 		proteinManager::STRUCTURE& objStruct_;
@@ -40,12 +44,12 @@ namespace ffManager{
 		
 		//integral matrices
 		
-		Eigen::VectorXd vector1;
-		Eigen::VectorXd vector2_fit;
+		Eigen::VectorXd vectorRef;
+		Eigen::VectorXd vectorObj_fit;
         
-        Eigen::VectorXd vector2PF;
-		Eigen::MatrixXd matrix21;
-		Eigen::MatrixXd matrix22;
+        Eigen::VectorXd vectorObjPF;
+		Eigen::MatrixXd matrixObjRef;
+		Eigen::MatrixXd matrixObjObj;
         
         //Integration options
         
@@ -77,8 +81,7 @@ namespace ffManager{
             
 			forceFieldFitter(proteinManager::STRUCTURE& refStruct,
                              proteinManager::STRUCTURE& objStruct, 
-                             GridIntegration intGrid,
-                             potential pot):refStruct_(refStruct),objStruct_(objStruct),pot_(pot){
+                             GridIntegration intGrid):refStruct_(refStruct),objStruct_(objStruct){
 
                 
 				this->updateAtomVectors();
@@ -96,8 +99,7 @@ namespace ffManager{
             
             forceFieldFitter(proteinManager::STRUCTURE& refStruct,
                              proteinManager::STRUCTURE& objStruct, 
-                             Grid_PF_Integration intGrid_PF,
-                             potential pot):refStruct_(refStruct),objStruct_(objStruct),pot_(pot){
+                             Grid_PF_Integration intGrid_PF):refStruct_(refStruct),objStruct_(objStruct){
 
                 
 				this->updateAtomVectors();
@@ -112,8 +114,7 @@ namespace ffManager{
             
             forceFieldFitter(proteinManager::STRUCTURE& refStruct,
                              proteinManager::STRUCTURE& objStruct, 
-                             MonteCarloIntegration intMC,
-                             potential pot):refStruct_(refStruct),objStruct_(objStruct),pot_(pot){
+                             MonteCarloIntegration intMC):refStruct_(refStruct),objStruct_(objStruct){
 
                 
 				this->updateAtomVectors();
@@ -154,7 +155,7 @@ namespace ffManager{
 			
 			std::tuple<real3,real3> computeBox(){
 			
-				real cutOff = pot_.getCutOff();
+				real cutOff = std::max(refPot.getCutOff(),objPot.getCutOff());
 				
                 //Determining box
                 
@@ -189,29 +190,30 @@ namespace ffManager{
 				
                 std::stringstream ss;
                 
-				real cutOff2 = pot_.getCutOff()*pot_.getCutOff();
+				real cutOff2 = std::max(refPot.getCutOff(),objPot.getCutOff());
+                
+                potProduct<objPotType,refPotType> potProductObjRef;
+                potProduct<objPotType,objPotType> potProductObjObj;
 				
-				matrix21.resize(objStructAtom.size(),refStructAtom.size());
-				matrix22.resize(objStructAtom.size(),objStructAtom.size());
-				
+				matrixObjRef.resize(objStructAtom.size(),refStructAtom.size());
+				matrixObjObj.resize(objStructAtom.size(),objStructAtom.size());
                 
 				for(int i=0;i<objStructAtom.size();i++){
 					std::cout << i << std::endl;
 					for(int j=0;j<refStructAtom.size();j++){
-						real3 atm1 = objStructAtom[i]->getAtomCoord()/10;
-						real3 atm2 = refStructAtom[j]->getAtomCoord()/10;
+                        real3 atmRef = refStructAtom[j]->getAtomCoord()/10;
+						real3 atmObj = objStructAtom[i]->getAtomCoord()/10;
 						
-						real3 dst = atm1 - atm2;
+						real3 dst = atmRef - atmObj;
 						
-						if(dot(dst,dst) < cutOff2 and potential::getInteractionParm(*refStructAtom[j]) != real(0)) {
+						if(dot(dst,dst) < cutOff2 and !potProductObjRef.isNull()) {
                             
-                            auto potP21 = pot_.getPotentialProduct21({atm1.x,atm1.y,atm1.z},
-                                                                     {atm2.x,atm2.y,atm2.z});
+                            potProductObjRef.setParametersLinealFit(atmObj,atmRef);
                             
                             if(currentIntegrator == grid ){
-                                matrix21(i,j) = integGrid.computeIntegral(potP21);
+                                matrixObjRef(i,j) = integGrid.computeIntegral(potProductObjRef);
                             } else if (currentIntegrator == MC){
-                                matrix21(i,j) = integMC.computeIntegralAverage(potP21,samplesPerIntegral_).x;
+                                matrixObjRef(i,j) = integMC.computeIntegralAverage(potProductObjRef,samplesPerIntegral_).x;
                             } else {
                                 ss.clear();
                                 ss << "Selected integrator is not valid";
@@ -219,7 +221,7 @@ namespace ffManager{
                             }
                             
 						} else {
-							matrix21(i,j) = 0;
+							matrixObjRef(i,j) = 0;
 						}
 					}
 				}
@@ -228,10 +230,10 @@ namespace ffManager{
 				for(int i=0;i<objStructAtom.size();i++){
 					std::cout << i << std::endl;
 					for(int j=i;j<objStructAtom.size();j++){
-						real3 atm1 = objStructAtom[i]->getAtomCoord()/10;
-						real3 atm2 = objStructAtom[j]->getAtomCoord()/10;
+						real3 atmObj1 = objStructAtom[i]->getAtomCoord()/10;
+						real3 atmObj2 = objStructAtom[j]->getAtomCoord()/10;
 						
-						real3 dst = atm1 - atm2;
+						real3 dst = atmObj1 - atmObj2;
 						
 						if(dot(dst,dst) < cutOff2) {
                             
@@ -259,6 +261,7 @@ namespace ffManager{
 				
 			}
             
+            /*
             void computeVectorMatrix(){
                 
                 std::stringstream ss;
@@ -446,11 +449,14 @@ namespace ffManager{
 				
 				this->updateAtomVectors();
 			}
+            */
 		
     };
 }
 }
 
+
+/*
 template <int exponent>
 struct potentialInvExponent{
     
@@ -726,6 +732,7 @@ struct potentialCoulombDebye{
     }
     
 };
+*/
 
 int main(){
     
@@ -748,6 +755,7 @@ int main(){
     
     /////////////////////////////////////////////////////////////////
     
+    /*
     using potential = potentialInvExponent<6>;
     potential  pot(1,200); //c12 1,20
     
@@ -763,17 +771,18 @@ int main(){
     //gInt.cellSize = 0.05;
     //
     //proteinManager::ffManager::forceFieldFitter<potential> ffF(pdbRef,pdbObj,gInt,pot);
-    /*
-    using potential = potentialCoulombDebye;
-    potential pot(3,80,0.97);
+    //
     
-    proteinManager::ffManager::forceFieldFitter<potential>::Grid_PF_Integration gridPF;
-    gridPF.inputFilePath = "./examples/phimap1aki.cube";
-    gridPF.lFactor = 0.1;
-    gridPF.fFactor = 0.593;
-    
-    proteinManager::ffManager::forceFieldFitter<potential> ffF(pdbRef,pdbObj,gridPF,pot);
-    */
+    //using potential = potentialCoulombDebye;
+    //potential pot(3,80,0.97);
+    //
+    //proteinManager::ffManager::forceFieldFitter<potential>::Grid_PF_Integration gridPF;
+    //gridPF.inputFilePath = "./examples/phimap1aki.cube";
+    //gridPF.lFactor = 0.1;
+    //gridPF.fFactor = 0.593;
+    //
+    //proteinManager::ffManager::forceFieldFitter<potential> ffF(pdbRef,pdbObj,gridPF,pot);
+    //
     
 	ffF.computeNewParametersTotalChargeConstraint();
     //ffF.computeNewParametersUsingPF();
@@ -799,6 +808,6 @@ int main(){
     //fC.outputIndex_Field(obj);
     fC.output_CUBE(obj," "," ",10,1);
     //fC.output_CUBE(obj," "," ",10,1/0.593);
-    
+    */
     return EXIT_SUCCESS;
 }

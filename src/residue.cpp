@@ -78,7 +78,7 @@ namespace proteinManager {
     
     #define GET_RES_PROPERTY_IMPL_T(type,Name,name)  GET_RES_PROPERTY_IMPL_R(type,Name,name)
     #define GET_RES_PROPERTY_IMPL_R(type,Name,name)  type RESIDUE::getRes##Name() const{ \
-                                                                                         try { return std::any_cast<type>(residueProperties.at(#name));} \
+                                                                                         try { return boost::any_cast<type>(residueProperties.at(#name));} \
                                                                                          catch (const std::out_of_range& e){ \
                                                                                              std::stringstream ss; \
                                                                                              ss << "ERROR ( " << e.what() << " ). The property \"" << #name << "\" has not been added previously." ; \

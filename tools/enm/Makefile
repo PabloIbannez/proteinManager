@@ -1,2 +1,2 @@
 enm:
-	g++-7 enmTest.cpp -std=c++17 -O3 -L ../../shared -I ../../include -lproteinManager
+	g++ enmTest.cpp -std=c++11 -O3 -L ../../shared -I ../../include -lproteinManager

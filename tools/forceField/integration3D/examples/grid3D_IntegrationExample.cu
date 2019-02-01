@@ -2,7 +2,10 @@
 
 #include <iostream>
 
-#include "../pIntegrator.cuh"
+#include "../integrator3D.cuh"
+#include <proteinManager.hpp>
+
+using namespace proteinManager;
 
 struct functionTest{
     

@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "proteinManager.hpp"
+#include <proteinManager.hpp>
 
 int main(int argc, char *argv[]) {
 

@@ -1,2 +1,2 @@
 meanDisplacement:
-	g++-7 meanDisplacement.cpp -std=c++17 -O3 -L ../../shared -I ../../include -lproteinManager
+	g++ meanDisplacement.cpp -std=c++11 -O3 -L ../../shared -I ../../include -lproteinManager

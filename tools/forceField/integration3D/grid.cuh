@@ -18,10 +18,9 @@
 #include <thrust/host_vector.h>
 #include <thrust/device_vector.h>
 
-#include "vectorData.cuh"
+#include <proteinManager.hpp>
 
-using namespace vectorData;
-
+namespace proteinManager{
 namespace integrator{
 namespace grid{
 
@@ -543,6 +542,7 @@ namespace grid{
                     
                 }
         };
+}
 }
 }
 

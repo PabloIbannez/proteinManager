@@ -7,13 +7,13 @@
 #include <sstream>
 
 #include <proteinManager.hpp>
-#include "./integration3D/src/pIntegrator.cuh"
+#include "./integration3D/integrator3D.cuh"
 
 namespace proteinManager {
 namespace fieldComputing{
     
     template <class function>
-    __global__ void functionGrid3DEvaluation(vectorData::real4* grid_ptr,
+    __global__ void functionGrid3DEvaluation(real4* grid_ptr,
                                              int N,
                                              function f){
                                             
@@ -60,7 +60,7 @@ namespace fieldComputing{
             }
             
             template<class potential>
-            void computeField(proteinManager::STRUCTURE& structIn, potential& pot){
+            void computeField(proteinManager::STRUCTURE& structIn, potential pot){
                 
                 std::stringstream ss;
                 if(initialized_ == false){
@@ -70,7 +70,7 @@ namespace fieldComputing{
                 }
                 
                 int N  = grid.getSize();
-                vectorData::real4* grid_ptr = grid.getGPU_raw();
+                real4* grid_ptr = grid.getGPU_raw();
                 
                 /////////////////////////////////////////////////////////////////////////////////
                 
@@ -82,82 +82,11 @@ namespace fieldComputing{
                 for(proteinManager::RESIDUE& res : ch.residue())    {
                 for(proteinManager::ATOM& atm : res.atom())         {
                     
-                    auto potAP = pot.getPotentialAtPoint({atm.getAtomCoord().x/10,atm.getAtomCoord().y/10,atm.getAtomCoord().z/10},
-                                                          potential::getInteractionParm(atm));
+                    pot.setParameters(atm);
                                                                                   
                     functionGrid3DEvaluation<<<Nblocks, Nthreads,0,fieldComputingStream>>>(grid_ptr,
                                                                                            N,
-                                                                                           potAP);
-                    cudaStreamSynchronize(fieldComputingStream);
-                    
-                }}}}
-                
-            }
-            
-            template<class potential>
-            void computeRefField(proteinManager::STRUCTURE& structIn, potential& pot){
-                
-                std::stringstream ss;
-                if(initialized_ == false){
-                        ss.clear();
-                        ss << "ERROR: " << __FUNCTION__ << " can not be used until grid has been initialized";
-                        throw std::runtime_error(ss.str());
-                }
-                
-                int N  = grid.getSize();
-                vectorData::real4* grid_ptr = grid.getGPU_raw();
-                
-                /////////////////////////////////////////////////////////////////////////////////
-                
-                int Nthreads=128;
-                int Nblocks=N/Nthreads + ((N%Nthreads)?1:0);
-                
-                for(proteinManager::MODEL& md : structIn.model())   {
-                for(proteinManager::CHAIN& ch : md.chain())         {
-                for(proteinManager::RESIDUE& res : ch.residue())    {
-                for(proteinManager::ATOM& atm : res.atom())         {
-                    
-                    auto potAP = pot.getPotentialAtPointRef({atm.getAtomCoord().x/10,atm.getAtomCoord().y/10,atm.getAtomCoord().z/10},
-                                                             potential::getInteractionParm(atm));
-                                                                                  
-                    functionGrid3DEvaluation<<<Nblocks, Nthreads,0,fieldComputingStream>>>(grid_ptr,
-                                                                                           N,
-                                                                                           potAP);
-                    cudaStreamSynchronize(fieldComputingStream);
-                    
-                }}}}
-                
-            }
-            
-            template<class potential>
-            void computeObjField(proteinManager::STRUCTURE& structIn, potential& pot){
-                
-                std::stringstream ss;
-                if(initialized_ == false){
-                        ss.clear();
-                        ss << "ERROR: " << __FUNCTION__ << " can not be used until grid has been initialized";
-                        throw std::runtime_error(ss.str());
-                }
-                
-                int N  = grid.getSize();
-                vectorData::real4* grid_ptr = grid.getGPU_raw();
-                
-                /////////////////////////////////////////////////////////////////////////////////
-                
-                int Nthreads=128;
-                int Nblocks=N/Nthreads + ((N%Nthreads)?1:0);
-                
-                for(proteinManager::MODEL& md : structIn.model())   {
-                for(proteinManager::CHAIN& ch : md.chain())         {
-                for(proteinManager::RESIDUE& res : ch.residue())    {
-                for(proteinManager::ATOM& atm : res.atom())         {
-                    
-                    auto potAP = pot.getPotentialAtPointObj({atm.getAtomCoord().x/10,atm.getAtomCoord().y/10,atm.getAtomCoord().z/10},
-                                                             potential::getInteractionParm(atm));
-                                                                                  
-                    functionGrid3DEvaluation<<<Nblocks, Nthreads,0,fieldComputingStream>>>(grid_ptr,
-                                                                                           N,
-                                                                                           potAP);
+                                                                                           pot);
                     cudaStreamSynchronize(fieldComputingStream);
                     
                 }}}}

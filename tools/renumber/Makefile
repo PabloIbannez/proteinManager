@@ -1,2 +1,2 @@
 renumber:
-	g++-7 renumber.cpp -std=c++17 -O3 -L ../../shared -I ../../include -lproteinManager
+	g++ renumber.cpp -std=c++11 -O3 -L ../../shared -I ../../include -lproteinManager

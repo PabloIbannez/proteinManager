@@ -29,7 +29,7 @@ namespace proteinManager {
     
       private:
       
-        std::map<std::string, std::any> chainProperties;
+        std::map<std::string, boost::any> chainProperties;
     
         MODEL* parentModel_;
     
