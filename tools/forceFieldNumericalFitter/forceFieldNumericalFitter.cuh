@@ -19,10 +19,8 @@
 
 #include "./integration3D/integrator3D.cuh"
 
-#define DEBUG
-
 namespace proteinManager{
-namespace ffManager{
+namespace ff_fitting{
     
     template <class refPotType,class objPotType>
     class forceFieldFitter{
@@ -49,7 +47,7 @@ namespace ffManager{
         
         //Integration options
         
-        enum integratorTypes {grid,grid_PF,MC};
+        enum integratorTypes {grid,MC};
         integratorTypes currentIntegrator;
         
         integrator::integrator3D_grid_ns::integrator3D_grid integGrid;
@@ -61,12 +59,6 @@ namespace ffManager{
         
             struct GridIntegration{
                 real cellSize = -1;
-            };
-            
-            struct Grid_PF_Integration{
-                std::string inputFilePath;
-                real lFactor = 1;
-                real fFactor = 1;
             };
         
             struct MonteCarloIntegration{
@@ -93,21 +85,6 @@ namespace ffManager{
                                              {std::get<1>(box).x,std::get<1>(box).y,std::get<1>(box).z},
                                              intGrid.cellSize);
                 currentIntegrator = grid;
-                
-            }
-            
-            forceFieldFitter(proteinManager::STRUCTURE& refStruct,
-                             proteinManager::STRUCTURE& objStruct, 
-                             Grid_PF_Integration intGrid_PF):refStruct_(refStruct),objStruct_(objStruct){
-
-                
-				this->updateAtomVectors();
-                
-                #ifdef DEBUG
-                std::cout << "Grid PF integrator selected" << std::endl;
-                #endif
-                integGrid.init_precompFunct(intGrid_PF.inputFilePath,intGrid_PF.lFactor,intGrid_PF.fFactor);
-                currentIntegrator = grid_PF;
                 
             }
             
@@ -340,123 +317,170 @@ namespace ffManager{
 				
 				#ifdef DEBUG
 				
-				real totalChargeRef = 0;
-				real totalChargeObj = 0;
-				
-				for(int i=0;i<vectorRef.size();i++){
-					totalChargeRef += vectorRef[i];
-				}
-				
-				for(int i=0;i<vectorObj_fit.size()-1;i++){
-					totalChargeObj += vectorObj_fit[i];
-				}
-				
-				std::cout << "Ref charge: " << totalChargeRef << " Obj charge: " << totalChargeObj << std::endl;
-				
-				real3 totalDipoleRef = {0,0,0};
-				real3 totalDipoleObj = {0,0,0};
-				
-				for(proteinManager::MODEL& md : refStruct_.model()) {
-				for(proteinManager::CHAIN& ch : md.chain())         {
-				for(proteinManager::RESIDUE& res : ch.residue())    {
-				for(proteinManager::ATOM& atm : res.atom())         {
-								totalDipoleRef += atm.getAtomCoord()*refPot_.getInteractionParmLinealFit(atm);
-				}}}}
-				
-				for(proteinManager::MODEL& md : objStruct_.model()) {
-				for(proteinManager::CHAIN& ch : md.chain())         {
-				for(proteinManager::RESIDUE& res : ch.residue())    {
-				for(proteinManager::ATOM& atm : res.atom())         {
-								totalDipoleObj += atm.getAtomCoord()*objPot_.getInteractionParmLinealFit(atm);
-				}}}}
-				
-				std::cout << "Ref dipole: " << totalDipoleRef << " Obj dipole: " << totalDipoleObj << std::endl;
+                    real totalChargeRef = 0;
+                    real totalChargeObj = 0;
+                    
+                    for(int i=0;i<vectorRef.size();i++){
+                        totalChargeRef += vectorRef[i];
+                    }
+                    
+                    for(int i=0;i<vectorObj_fit.size()-1;i++){
+                        totalChargeObj += vectorObj_fit[i];
+                    }
+                    
+                    std::cout << "Ref charge: " << totalChargeRef << " Obj charge: " << totalChargeObj << std::endl;
+                    
+                    real3 totalDipoleRef = {0,0,0};
+                    real3 totalDipoleObj = {0,0,0};
+                    
+                    for(proteinManager::MODEL& md : refStruct_.model()) {
+                    for(proteinManager::CHAIN& ch : md.chain())         {
+                    for(proteinManager::RESIDUE& res : ch.residue())    {
+                    for(proteinManager::ATOM& atm : res.atom())         {
+                                    totalDipoleRef += atm.getAtomCoord()*refPot_.getInteractionParmLinealFit(atm);
+                    }}}}
+                    
+                    for(proteinManager::MODEL& md : objStruct_.model()) {
+                    for(proteinManager::CHAIN& ch : md.chain())         {
+                    for(proteinManager::RESIDUE& res : ch.residue())    {
+                    for(proteinManager::ATOM& atm : res.atom())         {
+                                    totalDipoleObj += atm.getAtomCoord()*objPot_.getInteractionParmLinealFit(atm);
+                    }}}}
+                    
+                    std::cout << "Ref dipole: " << totalDipoleRef << " Obj dipole: " << totalDipoleObj << std::endl;
 				
 				#endif
 				
 				this->updateAtomVectors();
 			}
+			
+		
+    };
+    
+    template <class objPotType>
+    class forceFieldFitter_PrecomputedField{
+        
+        private:
+        
+            objPotType objPot_;
             
-            /*
-            void computeVectorMatrix(){
+            proteinManager::STRUCTURE& objStruct_;
+            
+            std::vector<std::shared_ptr<proteinManager::ATOM>> objStructAtom;
+            
+            //integral matrices
+            
+            Eigen::VectorXd vectorObj_fit;
+            
+            Eigen::VectorXd vectorObjPF;
+            Eigen::MatrixXd matrixObjObj;
+            
+            integrator::integrator3D_grid_ns::integrator3D_grid integGrid;
+            
+            
+        public:
+        
+            struct GridIntegrationPF{
+                std::string precompFieldFilePath;
+            };
+            
+            forceFieldFitter_PrecomputedField(proteinManager::STRUCTURE& objStruct, 
+                                              GridIntegrationPF grPF,
+                                              objPotType objPot
+                                             ):objStruct_(objStruct),objPot_(objPot){
+
                 
-                std::stringstream ss;
+				this->updateAtomVectors();
                 
-                if(currentIntegrator != grid_PF){
-                    ss << "computeVectorMatrix only can be used with a grid_PF integrator";
-                    throw std::runtime_error(ss.str());
-                }
+                #ifdef DEBUG
+                std::cout << "gridPF integrator selected" << std::endl;
+                #endif
                 
-                real cutOff2 = pot_.getCutOff()*pot_.getCutOff();
+                integGrid.init_precompFunct(grPF.precompFieldFilePath);
+            }
+			
+			void updateAtomVectors(){
                 
-                vector2PF.resize(objStructAtom.size());
-                matrix22.resize(objStructAtom.size(),objStructAtom.size());
+				objStructAtom = std::vector<std::shared_ptr<proteinManager::ATOM>>();
+				
+				for(proteinManager::MODEL& md : objStruct_.model()) {
+				for(proteinManager::CHAIN& ch : md.chain())         {
+				for(proteinManager::RESIDUE& res : ch.residue())    {
+				for(proteinManager::ATOM& atm : res.atom())         {
+								objStructAtom.push_back(std::make_shared<proteinManager::ATOM>(atm));
+				}}}}
+				
+			}
+            
+            void computeMatrixVector(){
+                
+                real cutOff2 = objPot_.getCutOff();
+                     cutOff2 = cutOff2*cutOff2;
+                
+                vectorObjPF.resize(objStructAtom.size());
+                matrixObjObj.resize(objStructAtom.size(),objStructAtom.size());
+                
+                potPF_Product<objPotType> potProductPFObj(objPot_);
+                potProduct<objPotType,objPotType> potProductObjObj(objPot_,objPot_);
                 
                 for(int i=0;i<objStructAtom.size();i++){
 					std::cout << i << std::endl;
                     
-                    real3 atm1 = objStructAtom[i]->getAtomCoord();
+                    potProductPFObj.setParametersLinealFit(*objStructAtom[i]);
                     
-                    auto potP2PF = pot_.getPotentialProduct2PF({atm1.x,atm1.y,atm1.z});
-                    
-                    vector2PF[i] = integGrid.computeIntegral_PF(potP2PF);
-                    
-                    
+                    vectorObjPF[i] = integGrid.computeIntegral_PF(potProductPFObj);
                 }
                 
                 for(int i=0;i<objStructAtom.size();i++){
 					std::cout << i << std::endl;
 					for(int j=i;j<objStructAtom.size();j++){
-						real3 atm1 = objStructAtom[i]->getAtomCoord();
-						real3 atm2 = objStructAtom[j]->getAtomCoord();
+						real3 atmObj1 = objStructAtom[i]->getAtomCoord();
+						real3 atmObj2 = objStructAtom[j]->getAtomCoord();
 						
-						real3 dst = atm1 - atm2;
+						real3 dst = atmObj1 - atmObj2;
 						
-						if(dot(dst,dst) < cutOff2) {
+						if(dot(dst,dst) < cutOff2 ) {
                             
-                            auto potP22 = pot_.getPotentialProduct22({atm1.x,atm1.y,atm1.z},
-                                                                     {atm2.x,atm2.y,atm2.z});
-
-                            matrix22(i,j) = integGrid.computeIntegral(potP22);
-							matrix22(j,i) = matrix22(i,j);
+                            potProductObjObj.setParametersLinealFit(*objStructAtom[i],*objStructAtom[j]);
+                            
+                            matrixObjObj(i,j) = integGrid.computeIntegral_PF(potProductPFObj);
+							matrixObjObj(j,i) = matrixObjObj(i,j);
                             
 						} else {
-							matrix22(i,j) = 0;
-							matrix22(j,i) = 0;
+							matrixObjObj(i,j) = 0;
+							matrixObjObj(j,i) = 0;
 						}
 					}
 				}
-                
-                
             }
             
-            void computeNewParametersUsingPF(){
+            void computeNewParameters(){
                 
-                this->computeVectorMatrix();
+                this->computeMatrixVector();
                 
-                vector2_fit.resize(objStructAtom.size());
+                vectorObj_fit.resize(objStructAtom.size());
                 
-                vector2_fit = matrix22.colPivHouseholderQr().solve(vector2PF);
+                vectorObj_fit = matrixObjObj.colPivHouseholderQr().solve(vectorObjPF);
                 
                 int i=0;
                 for(proteinManager::MODEL& md : objStruct_.model()) {
 				for(proteinManager::CHAIN& ch : md.chain())         {
 				for(proteinManager::RESIDUE& res : ch.residue())    {
 				for(proteinManager::ATOM& atm : res.atom())         {
-                                potential::setInteractionParm(atm,vector2_fit[i]);
+                                objPot_.setInteractionParmLinealFit(atm,vectorObj_fit[i]);
                                 //Check
                                 #ifdef DEBUG
-                                std::cout << vector2_fit[i] << std::endl;
+                                std::cout << vectorObj_fit[i] << std::endl;
                                 #endif
 								i++;
 				}}}}
 				
 				this->updateAtomVectors();
             }
-			
-            */
-			
-		
+            
+            
+        
     };
+    
 }
 }

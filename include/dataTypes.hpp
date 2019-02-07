@@ -59,6 +59,8 @@ namespace proteinManager {
         real z;
         real w;
     };
+    
+    std::ostream& operator<<(std::ostream& os, const real4& r);
 
 }
 #endif

@@ -1,5 +1,5 @@
 namespace proteinManager{
-namespace ffManager{
+namespace ff_fitting{
     
     struct repulsive12{
         
@@ -188,9 +188,15 @@ namespace ffManager{
         
         __host__ __device__ inline real operator()(real3 point){
         
-            real r2 = dot(point-partPos_,point-partPos_);
+            real3 dst;
             
-            if(r2 > cutOff2_) return real(0);
+            dst.x = point.x - partPos_.x;
+            dst.y = point.y - partPos_.y;
+            dst.z = point.z - partPos_.z;
+        
+            real r2 = dst.x*dst.x + dst.y*dst.y + dst.z*dst.z;
+            
+            if(r2 > cutOff2_ or r2 < e2_) return real(0);
             
             real r = sqrtf(r2);
             return f_*(C_*exp(-r/dl_))/(e_s_*r);
@@ -247,8 +253,6 @@ namespace ffManager{
         potType pt_;
         
         potPF_Product(potType pt):pt_(pt){}
-        
-        real getCutOff(){ return pt_.getCutOff();}
         
         void setParameters(ATOM& atm){pt_.setParameters(atm);}
         

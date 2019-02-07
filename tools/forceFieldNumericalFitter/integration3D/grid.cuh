@@ -278,9 +278,9 @@ namespace grid{
                     
                     boxSize_ = boxMax_-boxMin_;
                     
-                    gridSize_.x= boxSize_.x/cellSize_.x;
-                    gridSize_.y= boxSize_.y/cellSize_.y;
-                    gridSize_.z= boxSize_.z/cellSize_.z;
+                    gridSize_.x= std::ceil(boxSize_.x/cellSize_.x);
+                    gridSize_.y= std::ceil(boxSize_.y/cellSize_.y);
+                    gridSize_.z= std::ceil(boxSize_.z/cellSize_.z);
                     
                     gridDataCPU.resize(gridSize_.x*gridSize_.y*gridSize_.z);
                     
@@ -404,7 +404,165 @@ namespace grid{
                     }
                 }
                 
+                void output_DX(std::ostream& out){
+                    
+                    out << "1 class gridpositions counts " << gridSize_.x << " " << gridSize_.y << " " << gridSize_.z << std::endl;
+                    out << "origin " << boxMin_.x   << " " << boxMin_.y << " " << boxMin_.z << std::endl;
+                    out << "delta "  << cellSize_.x << " 0 0 " << std::endl;
+                    out << "delta "  << " 0 " << cellSize_.y << " 0 " << std::endl;
+                    out << "delta "  << " 0 0 " << cellSize_.z << std::endl;
+                    out << "object 2 class gridconnections counts " << gridSize_.x << " " << gridSize_.y << " " << gridSize_.z << std::endl;
+                    out << "object 3 class array type double rank 0 items " << gridSize_.x*gridSize_.y*gridSize_.z << " data follows " << std::endl;
+                    
+                    
+                    int newLineCount = 0;
+                    for(int i=0;i<gridSize_.x;i++) {
+                            for(int j=0;j<gridSize_.y;j++) {
+                                for(int k=0;k<gridSize_.z;k++) {
+                                    out << this->getValue(i,j,k) << " ";
+                                    newLineCount++;
+                                    if (newLineCount == 3) {
+                                        newLineCount = 0;
+                                        out << std::endl;
+                                    }
+                                }
+                            }
+                        }
+                    
+                    
+                }
+                
+                //input
+                
+                void inputIndex_Value(std::string inputFilePath){
+                    updateState(CPU,write);
+                    
+                    std::stringstream ss;
+                    
+                    //Check if file exists
+                    std::ifstream inputFile(inputFilePath);
+                    if(!inputFile){
+                        ss.clear();
+                        ss << "File not found: " << inputFilePath;
+                        throw std::runtime_error(ss.str());
+                    }
+                    
+                    std::string line;
+                    
+                    int intBuffer1;
+                    int intBuffer2;
+                    int intBuffer3;
+                    
+                    real floatBuffer1;
+                    real floatBuffer2;
+                    real floatBuffer3;
+                    real floatBuffer4;
+                    
+                    real3 boxMin;
+                    real3 boxMax;
+                    
+                    real3 cellSize;
+                    int3 gridSize;
+                    
+                    //Read box min
+                    
+                    std::getline(inputFile,line);
+                    ss.clear();
+                    ss.str(line);
+                    ss >> floatBuffer1 >> floatBuffer2 >> floatBuffer3;
+                    
+                    boxMin = {floatBuffer1,floatBuffer2,floatBuffer3};
+                    
+                    #ifdef DEBUG
+                    
+                        std::cout << "boxMin: " << boxMin << std::endl;
+                    
+                    #endif
+                    
+                    //Read box max
+                    
+                    std::getline(inputFile,line);
+                    ss.clear();
+                    ss.str(line);
+                    ss >> floatBuffer1 >> floatBuffer2 >> floatBuffer3;
+                    
+                    boxMax = {floatBuffer1,floatBuffer2,floatBuffer3};
+                    
+                    #ifdef DEBUG
+                    
+                        std::cout << "boxMax: " << boxMax << std::endl;
+                    
+                    #endif
+                    
+                    //Read cell size
+                    
+                    std::getline(inputFile,line);
+                    ss.clear();
+                    ss.str(line);
+                    ss >> floatBuffer1 >> floatBuffer2 >> floatBuffer3;
+                    
+                    cellSize = {floatBuffer1,floatBuffer2,floatBuffer3};
+                    
+                    #ifdef DEBUG
+                    
+                        std::cout << "cellSize: " << cellSize << std::endl;
+                    
+                    #endif
+                    
+                    ////////////////////////////////////////////////////
+                    
+                    this->setUpGrid_fixedCellSize(boxMin,boxMax,cellSize);
+                    
+                    ////////////////////////////////////////////////////
+                    
+                    //Read grid size
+                    
+                    std::getline(inputFile,line);
+                    ss.clear();
+                    ss.str(line);
+                    ss >> intBuffer1 >> intBuffer2 >> intBuffer3;
+                    
+                    gridSize = {intBuffer1,intBuffer2,intBuffer3};
+                    
+                    if(gridSize_.x != gridSize.x or
+                       gridSize_.y != gridSize.y or
+                       gridSize_.z != gridSize.z ){
+                            ss.clear();
+                            ss << "Grid values are not consistent \n" 
+                               << "Computed: " << gridSize_.x << " " << gridSize_.y << " " << gridSize_.z << "\n"
+                               << "Read: "     << gridSize.x  << " " << gridSize.y  << " " << gridSize.z  ;
+                            throw std::runtime_error(ss.str());
+                    }
+                    
+                    ////////////////////////////////////////////////////
+                    
+                    for(int i=0;i<gridSize_.x;i++) {
+                        for(int j=0;j<gridSize_.y;j++) {
+                            for(int k=0;k<gridSize_.z;k++) {
+                                
+                                std::getline(inputFile,line);
+                                ss.clear();
+                                ss.str(line);
+                                
+                                ss >> floatBuffer1 >> floatBuffer2 >> floatBuffer3 >> floatBuffer4;
+                                
+                                this->setVoxelValue(i,j,k,{floatBuffer1,floatBuffer2,floatBuffer3,floatBuffer4});
+                                
+                                //#ifdef DEBUG
+                                //
+                                //    std::cout << this->getVoxelValue(i,j,k) << std::endl;
+                                //
+                                //#endif
+                            }
+                        }
+                    }
+                    
+                    
+                    
+                }
+                
                 void input_CUBE(std::string inputFilePath, real lFactor = real(1.0) ,real fFactor = real(1.0)){
+                    updateState(CPU,write);
                     
                     std::stringstream ss;
                     

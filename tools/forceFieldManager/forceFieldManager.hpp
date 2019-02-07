@@ -20,8 +20,9 @@ namespace ffManager{
 	real charge;
 	real c6;
 	real c12;
+    real solvE;
 	
-	atomFFproperties(real charge,real c6,real c12):charge(charge),c6(c6),c12(c12){}
+	atomFFproperties(real charge,real c6,real c12,real solvE):charge(charge),c6(c6),c12(c12),solvE(solvE){}
     };
     
     class forceFieldManager{
@@ -61,6 +62,7 @@ namespace ffManager{
 			double chgBuffer;
 			double c6Buffer;
 			double c12Buffer;
+            double solvEBuffer;
 			
 			while(std::getline(forceFieldDataFile,line)){
 				
@@ -69,8 +71,8 @@ namespace ffManager{
 				
 				//Process line
 				ss.str(line);
-				ss >> resNameBuffer >> atomNameBuffer >> chgBuffer >> c6Buffer >> c12Buffer;
-				
+				ss >> resNameBuffer >> atomNameBuffer >> chgBuffer >> c6Buffer >> c12Buffer >> solvEBuffer;
+                
 				//Check format
 				if(ss.fail()){
 					ss.clear();
@@ -82,7 +84,7 @@ namespace ffManager{
 				//If the residue has not been added before, add it now
 				if(forceFieldData.count(resNameBuffer) == 0){
 				forceFieldData.insert(std::make_pair(resNameBuffer,std::make_shared<std::map<std::string,std::shared_ptr<atomFFproperties>>>()));
-				forceFieldData[resNameBuffer]->insert(std::make_pair(atomNameBuffer,std::make_shared<atomFFproperties>(chgBuffer,c6Buffer,c12Buffer)));
+				forceFieldData[resNameBuffer]->insert(std::make_pair(atomNameBuffer,std::make_shared<atomFFproperties>(chgBuffer,c6Buffer,c12Buffer,solvEBuffer)));
 				} else {
 					//We care about not adding the same atom twice
 					if(forceFieldData[resNameBuffer]->count(atomNameBuffer) > 0){
@@ -91,20 +93,22 @@ namespace ffManager{
 						   << "\" ,the following atom parameters have been added previously: \"" << line << "\"";
 						throw std::runtime_error(ss.str());
 					} else {
-						forceFieldData[resNameBuffer]->insert(std::make_pair(atomNameBuffer,std::make_shared<atomFFproperties>(chgBuffer,c6Buffer,c12Buffer)));
+						forceFieldData[resNameBuffer]->insert(std::make_pair(atomNameBuffer,std::make_shared<atomFFproperties>(chgBuffer,c6Buffer,c12Buffer,solvEBuffer)));
 					}
 				}
             }
 		
 		#ifdef DEBUG
 		//Check
-        real maxChg = std::numeric_limits<real>::lowest();
-        real maxC6  = std::numeric_limits<real>::lowest();
-        real maxC12 = std::numeric_limits<real>::lowest();
+        real maxChg   = std::numeric_limits<real>::lowest();
+        real maxC6    = std::numeric_limits<real>::lowest();
+        real maxC12   = std::numeric_limits<real>::lowest();
+        real maxSolvE = std::numeric_limits<real>::lowest();
         
-        real minChg = std::numeric_limits<real>::max();;
-        real minC6  = std::numeric_limits<real>::max();;
-        real minC12 = std::numeric_limits<real>::max();;
+        real minChg   = std::numeric_limits<real>::max();
+        real minC6    = std::numeric_limits<real>::max();
+        real minC12   = std::numeric_limits<real>::max();
+        real minSolvE = std::numeric_limits<real>::max();
         
 		for(auto& ff_entry : forceFieldData){
 			std::cout << ff_entry.first << std::endl;
@@ -113,28 +117,31 @@ namespace ffManager{
                 if(ff_a_entry.second->charge > maxChg) maxChg = ff_a_entry.second->charge;
                 if(ff_a_entry.second->c6 > maxC6) maxC6 = ff_a_entry.second->c6;
                 if(ff_a_entry.second->c12 > maxC12)  maxC12 = ff_a_entry.second->c12;
+                if(ff_a_entry.second->solvE > maxSolvE)  maxSolvE = ff_a_entry.second->solvE;
                 
                 if(ff_a_entry.second->charge < minChg) minChg = ff_a_entry.second->charge;
                 if(ff_a_entry.second->c6 < minC6 and ff_a_entry.second->c6 != 0) minC6 = ff_a_entry.second->c6;
                 if(ff_a_entry.second->c12 < minC12 and ff_a_entry.second->c12 != 0)  minC12 = ff_a_entry.second->c12;
+                if(ff_a_entry.second->solvE <minSolvE and ff_a_entry.second->solvE != 0)  minSolvE = ff_a_entry.second->solvE;
                 
                 
 			    std::cout << "\t" << ff_a_entry.first 
 			              << " " << ff_a_entry.second->charge 
 				      << " c6 "  << ff_a_entry.second->c6 << " c6(sqrt) " << sqrt(ff_a_entry.second->c6)
 				      << " c12 " << ff_a_entry.second->c12 << " c12(sqrt) " << sqrt(ff_a_entry.second->c12)
+                      << " solvE " << ff_a_entry.second->solvE
 				      << std::endl;
 			}
         }
         
         std::cout << std::endl;
-        std::cout << "maxChg: " << maxChg << " maxC6: " << maxC6 << " maxC6 (sqrt) " << sqrt(maxC6) << " maxC12: " << maxC12 << " maxC12 (sqrt) " << sqrt(maxC12) << std::endl;
-        std::cout << "minChg: " << minChg << " minC6: " << minC6 << " minC6 (sqrt) " << sqrt(minC6) << " minC12: " << minC12 << " minC12 (sqrt) " << sqrt(minC12) << std::endl;
+        std::cout << "maxChg: " << maxChg << " maxC6: " << maxC6 << " maxC6 (sqrt) " << sqrt(maxC6) << " maxC12: " << maxC12 << " maxC12 (sqrt) " << sqrt(maxC12)  << " maxSolvE: " << maxSolvE << std::endl;
+        std::cout << "minChg: " << minChg << " minC6: " << minC6 << " minC6 (sqrt) " << sqrt(minC6) << " minC12: " << minC12 << " minC12 (sqrt) " << sqrt(minC12)  << " minSolvE: " << minSolvE << std::endl;
         std::cout << std::endl;
 		#endif
 	    }
 	    
-	    //This function set the force field values (chg,c6,c12) for each atom in the structure structIn
+	    //This function set the force field values (chg,c6,c12,solvE) for each atom in the structure structIn
 	    void applyForceFieldData(proteinManager::STRUCTURE& structIn){
 			
 			std::stringstream ss;
@@ -164,11 +171,13 @@ namespace ffManager{
                         atm.setAtomCharge(0);
                         atm.setAtomC6(0);
                         atm.setAtomC12(0);
+                        atm.setAtomSolvE(0);
                                   
 					} else {
 						atm.setAtomCharge((*forceFieldData[res.getResName()])[atm.getAtomName()]->charge);
 						atm.setAtomC6(sqrt((*forceFieldData[res.getResName()])[atm.getAtomName()]->c6));
 						atm.setAtomC12(sqrt((*forceFieldData[res.getResName()])[atm.getAtomName()]->c12));
+                        atm.setAtomSolvE((*forceFieldData[res.getResName()])[atm.getAtomName()]->solvE);
 					}
 					}
 			}}}

@@ -10,3 +10,6 @@ BASIC_LINE= nvcc -lineinfo $(DEBUG_GPU) -ccbin="$(CXX)" -Xcompiler="$(CPU)" -src
 
 all:
 	$(BASIC_LINE)  -L ../../shared -I ../../include -lproteinManager forceFieldFittingTest.cuh
+
+PF:
+	$(BASIC_LINE)  -L ../../shared -I ../../include -lproteinManager forceFieldFitting_PF_Test.cuh

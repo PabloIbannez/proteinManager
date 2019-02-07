@@ -123,8 +123,8 @@ namespace integrator3D_grid_ns{
                 this->init_fixedBox(boxMin,boxMax,{gridSize,gridSize,gridSize});
             }
             
-            void init_precompFunct(std::string inputFilePath, real coordFactor = real(1.0) ,real precompFunctFactor = real(1.0)){
-                g3D.input_CUBE(inputFilePath, coordFactor,precompFunctFactor);
+            void init_precompFunct(std::string inputFilePath){
+                g3D.inputIndex_Value(inputFilePath);
                 functionValuesOverGrid.resize(g3D.getSize());
                 initialized = true;
                 precompFunct = true;

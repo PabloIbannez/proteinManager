@@ -59,6 +59,14 @@ namespace fieldComputing{
                 initialized_ = true;
             }
             
+             void init(real3 boxMin, real3 boxMax, real3 cellSize){
+                grid.setUpGrid_fixedCellSize({boxMin.x,boxMin.y,boxMin.z},
+                                             {boxMax.x,boxMax.y,boxMax.z},
+                                             {cellSize.x,cellSize.y,cellSize.z});
+                initialized_ = true;
+                 
+             }
+            
             template<class potential>
             void computeField(proteinManager::STRUCTURE& structIn, potential pot){
                 
@@ -103,6 +111,10 @@ namespace fieldComputing{
             
             void output_CUBE(std::ostream& out,std::string comment1 = " ", std::string comment2 = " ", real lFactor = real(1.0), real fFactor = real(1.0)){
                 grid.output_CUBE(out,comment1,comment2,lFactor,fFactor);
+            }
+            
+            void output_DX(std::ostream& out){
+                grid.output_DX(out);
             }
             
         

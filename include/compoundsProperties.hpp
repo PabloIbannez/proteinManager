@@ -30,6 +30,7 @@ namespace proteinManager {
                               ((Radius     , radius     ,real       )) \
                               ((C12        , c12        ,real       )) \
                               ((C6         , c6         ,real       )) \
+                              ((SolvE      , solvE      ,real       )) \
                               ((SASA       , SASA       ,real       )) 
                               
 

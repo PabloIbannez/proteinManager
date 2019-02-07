@@ -1,3 +1,5 @@
+#define DEBUG
+
 #include "../forceFieldManager/forceFieldManager.hpp"
 #include "../geometricTransformations/geometricTransformations.hpp"
 
@@ -7,7 +9,6 @@
 #include "../fieldComputing/fieldComputing.cuh"
 
 int main(){
-    
     
     proteinManager::STRUCTURE pdbRef;
     proteinManager::STRUCTURE pdbObj;
@@ -31,35 +32,25 @@ int main(){
     
     /////////////////////////////////////////////////////////////////
     
-    using potentialRef = proteinManager::ffManager::attractive6;
-    using potentialObj = proteinManager::ffManager::attractive6;
+    using potentialRef = proteinManager::ff_fitting::attractive6;
+    using potentialObj = proteinManager::ff_fitting::attractive6;
     
     potentialRef potRef(1,0.606962);
     potentialObj potObj(1,0.606962);
     
     /*
-    proteinManager::ffManager::forceFieldFitter<potentialRef,potentialObj>::MonteCarloIntegration mc;
+    proteinManager::ff_fitting::forceFieldFitter<potentialRef,potentialObj>::MonteCarloIntegration mc;
     mc.pointsPerIntegral = 100000;
     mc.samplesPerIntegral = 10;
     
-    proteinManager::ffManager::forceFieldFitter<potentialRef,potentialObj> test(pdbRef,pdbObj,mc,potRef,potObj);
+    proteinManager::ff_fitting::forceFieldFitter<potentialRef,potentialObj> test(pdbRef,pdbObj,mc,potRef,potObj);
     */
     
     
-    proteinManager::ffManager::forceFieldFitter<potentialRef,potentialObj>::GridIntegration gInt;
+    proteinManager::ff_fitting::forceFieldFitter<potentialRef,potentialObj>::GridIntegration gInt;
     gInt.cellSize = 0.05;
     
-    proteinManager::ffManager::forceFieldFitter<potentialRef,potentialObj> test(pdbRef,pdbObj,gInt,potRef,potObj);
-    
-    
-    /*
-    proteinManager::ffManager::forceFieldFitter<potential>::Grid_PF_Integration gridPF;
-    gridPF.inputFilePath = "./examples/phimap1aki.cube";
-    gridPF.lFactor = 0.1;
-    gridPF.fFactor = 0.593;
-    
-    proteinManager::ffManager::forceFieldFitter<potential> ffF(pdbRef,pdbObj,gridPF,pot);
-    */
+    proteinManager::ff_fitting::forceFieldFitter<potentialRef,potentialObj> test(pdbRef,pdbObj,gInt,potRef,potObj);
     
     test.computeNewParametersTotalChargeConstraint();
 	

@@ -70,4 +70,9 @@ namespace proteinManager {
         os << r.x << " " << r.y << " " << r.z;
         return os;
     }
+    
+    std::ostream& operator<<(std::ostream& os, const real4& r) {
+        os << r.x << " " << r.y << " " << r.z << " " << r.w;
+        return os;
+    }
 }
