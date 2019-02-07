@@ -1,11 +1,11 @@
-#define DEBUG
+//#define DEBUG
 #include "coarseGrainedManager.hpp"
+#include "../massesManager/massesManager.hpp"
 
 int main(){
     
     proteinManager::coarseGrainedManager::coarseGrainedGenerator cg;
     
-    cg.loadElementsData("./elements/element_Types.prm");
     cg.loadCGmodel("./coarseGrainedModels/RES2BEAD/aminoAcid2bead_RES2BEAD.map","./coarseGrainedModels/RES2BEAD/bead2atom_RES2BEAD.map");
     
     ////////////////////////////////////////////
@@ -20,7 +20,12 @@ int main(){
     
     pdbInput.loadPDB(pdbInputPath);
     
-    cg.applyCoarseGrainedMap(pdbInput,pdbOutput);
+    proteinManager::massesManager massesM;
+    
+    massesM.loadMassesData("../massesManager/massesData/atomMasses.dat");
+    massesM.applyMassesData(pdbInput);
+    
+    cg.applyCoarseGrainedMap<proteinManager::coarseGrainedManager::coarseGrainedMappingSchemes::ca>(pdbInput,pdbOutput);
     
     ////////////////////////////////////////////
     

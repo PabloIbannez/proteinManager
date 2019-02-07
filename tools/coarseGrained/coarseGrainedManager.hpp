@@ -12,6 +12,8 @@
 
 #include <proteinManager.hpp>
 
+#include "coarseGrainedMappingSchemes.hpp"
+
 namespace proteinManager{
 namespace coarseGrainedManager{
 	
@@ -48,10 +50,6 @@ namespace coarseGrainedManager{
 		
 		private:
 		
-		//Elements types
-		
-		std::map<std::string,elementType*> elementsTypes;
-		
 		//CG model map
 		
 		std::map<std::string,aminoAcidType*> aminoAcidTypes;
@@ -59,63 +57,6 @@ namespace coarseGrainedManager{
 		
 		
 		public:
-		
-		//This function add info about the used elements e.g. mass
-		void loadElementsData(std::string elementsTypesFilePath){
-		
-		std::stringstream ss;
-		
-		//Check if file exists
-		std::ifstream elementTypesFile(elementsTypesFilePath);
-		if(!elementTypesFile){
-			ss.clear();
-			ss << "File not found: " << elementsTypesFilePath;
-			throw std::runtime_error(ss.str());
-		}
-		
-		//Processing file
-		std::string line;
-		
-		std::string stBuffer;
-		double dbBuffer;
-		
-		while(std::getline(elementTypesFile,line)){
-			
-			//Empty lines or lines which starts with # are ignored
-			if(line[0]=='#' or line.empty()) continue;
-			
-			ss.str(line);
-			ss >> stBuffer >> dbBuffer;
-			
-			if(ss.fail()){
-			ss.clear();
-			ss << "Format error in file: \"" << elementsTypesFilePath
-			<< "\" ,the following line couldn't be processed: \"" << line << "\"";
-			throw std::runtime_error(ss.str());
-			}
-			
-			//Check if the element has been added before
-			if(elementsTypes.count(stBuffer) == 0){
-			//If not, add it
-			elementsTypes.insert(std::make_pair(stBuffer,new elementType(stBuffer)));
-			elementsTypes[stBuffer]->mass = dbBuffer;
-			} else {
-			//Else an error is thrown
-			ss.clear();
-			ss << "The element type \"" << stBuffer << "\" has been added previously." ;
-			throw std::runtime_error(ss.str());
-			}
-			
-			ss.clear();
-		}
-		
-		/*
-		//Check
-		for(auto &e : elementsTypes){
-			std::cout << e.first << " " << e.second->name << " " << e.second->mass << std::endl;
-		}*/
-		
-		}
 		
 		void loadCGmodel(std::string aminoAcid_Bead_Map_FilePath, std::string bead_atom_Map_FilePath){
 		
@@ -191,18 +132,6 @@ namespace coarseGrainedManager{
 			ss << "Format error in file: \"" << bead_atom_Map_FilePath
 			<< "\" ,the following line couldn't be processed: \"" << line << "\"";
 			throw std::runtime_error(ss.str());
-			}
-		}
-		
-		//Check if each atom has a corresponding element
-		for(auto& b: beadTypes){
-			for(auto& a: b.second->atomComponents){
-			if(elementsTypes.count(a.substr(0,1)) == 0){
-				ss.clear();
-				ss << "Error in file: \"" << bead_atom_Map_FilePath << "\"" 
-				<< ". The atom \"" << a << "\" in the bead \"" << b.first << "\" can not be associated with an element";
-				throw std::runtime_error(ss.str());
-			}
 			}
 		}
 		
@@ -328,6 +257,7 @@ namespace coarseGrainedManager{
 		}
 		
 		
+        template<class mSch>
 		void applyCoarseGrainedMap(proteinManager::STRUCTURE& structIn,proteinManager::STRUCTURE& structOut){
 		
 		std::stringstream ss;
@@ -335,10 +265,6 @@ namespace coarseGrainedManager{
 		bool patternMatching;
 		int  atomCount;
         int  addedAtomCount = 0;
-		
-		proteinManager::real3 pos;
-		proteinManager::real  chg;
-		proteinManager::real  totalMass;
 		
 		for(proteinManager::MODEL& md : structIn.model()) {
 			structOut.addModel(md.getModelId());
@@ -373,41 +299,16 @@ namespace coarseGrainedManager{
 					
 					if(patternMatching){
 					
-					for(std::string const & bd : bdCompList){
-						
-						//TODO, more generic
-						
-                        ////////////////////////////////////////////////
-                        
-						pos = {0,0,0};
-						chg = 0;
-						totalMass = 0;
-						
-						for(std::string const & atom : beadTypes[bd]->atomComponents){
+                        for(std::string const & bd : bdCompList){
                             
-							chg += res.atom(atom).getAtomCharge();
-							totalMass += elementsTypes[atom.substr(0,1)]->mass;
-						}
-						
-						pos = res.atom("CA").getAtomCoord();
-                        
-                        ////////////////////////////////////////////////
-                        
-						resOut.addAtom(addedAtomCount,bd);
-						addedAtomCount++;
-                        
-						resOut.atom(bd).setAtomCoord(pos);
-						resOut.atom(bd).setAtomCharge(chg);
-                        
-                        //Common properties
-                        resOut.atom(bd).setAtomAltLoc(" ");
-                        resOut.atom(bd).setAtomOccupancy(1);
-                        resOut.atom(bd).setAtomTempFactor(0);
-                        resOut.atom(bd).setAtomElement("");
-						
-					}
+                            resOut.addAtom(addedAtomCount,bd);
+                            addedAtomCount++;
+                            
+                            mSch::mappingScheme(res,resOut,bd,beadTypes[bd]->atomComponents);
+                            
+                        }
 					
-					break;
+                        break;
 					}
 				}
 				
