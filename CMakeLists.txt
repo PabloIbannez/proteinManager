@@ -19,7 +19,7 @@ include_directories(include)
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
 
 # Install library
-install(TARGETS ${PROJECT_NAME} DESTINATION lib)
+install(TARGETS ${PROJECT_NAME} DESTINATION /usr/lib)
 
 # Install library headers
 install(FILES ${HEADERS} DESTINATION include/${PROJECT_NAME})
