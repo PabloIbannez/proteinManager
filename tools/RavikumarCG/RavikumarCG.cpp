@@ -2,7 +2,7 @@
 #include <fstream>
 #include <vector>
 
-#include <proteinManager.hpp>
+#include <proteinManager/proteinManager.hpp>
 
 struct particle{
     

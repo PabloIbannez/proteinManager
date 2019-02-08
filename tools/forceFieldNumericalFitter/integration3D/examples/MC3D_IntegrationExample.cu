@@ -3,7 +3,7 @@
 #include <iostream>
 
 #include "../integrator3D.cuh"
-#include <proteinManager.hpp>
+#include <proteinManager/proteinManager.hpp>
 
 using namespace proteinManager;
 

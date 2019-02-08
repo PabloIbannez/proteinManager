@@ -4,7 +4,7 @@
    Set of functions for calculating the centroid of the different entities.
 */
 
-#include <proteinManager.hpp>
+#include <proteinManager/proteinManager.hpp>
 
 namespace proteinManager{
     

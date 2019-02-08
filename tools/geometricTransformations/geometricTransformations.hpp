@@ -1,4 +1,4 @@
-#include <proteinManager.hpp>
+#include <proteinManager/proteinManager.hpp>
 
 namespace proteinManager{
     

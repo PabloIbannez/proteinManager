@@ -1,7 +1,7 @@
-#include <proteinManager.hpp>
+#include <proteinManager/proteinManager.hpp>
 
-#include "../massesManager/massesManager.hpp"
-#include "../centroid/centerOfMass.hpp"
+#include "../../tools/massesManager/massesManager.hpp"
+#include "../../tools/centers/centerOfMass.hpp"
 
 int main(int argc, char* argv[]){
     

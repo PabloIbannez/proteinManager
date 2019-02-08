@@ -3,7 +3,7 @@
 /*
    Set of functions for calculating the center of mass of the different entities.
 */
-#include <proteinManager.hpp>
+#include <proteinManager/proteinManager.hpp>
 
 namespace proteinManager{
 

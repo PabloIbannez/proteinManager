@@ -10,7 +10,7 @@
 #include <sstream>
 #include <limits>
 
-#include <proteinManager.hpp>
+#include <proteinManager/proteinManager.hpp>
 
 namespace proteinManager {
 namespace ffManager{

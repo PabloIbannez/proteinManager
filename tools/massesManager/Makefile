@@ -1,2 +1,2 @@
 massesManager:
-	g++ massesManagerTest.cpp -std=c++11 -O3 -L ../../shared -I ../../include -lproteinManager
+	g++ massesManagerTest.cpp -std=c++11 -O3   -lproteinManager

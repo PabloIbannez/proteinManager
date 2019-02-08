@@ -15,7 +15,7 @@
 
 #include <eigen3/Eigen/Eigen>
 
-#include <proteinManager.hpp>
+#include <proteinManager/proteinManager.hpp>
 
 #include "./integration3D/integrator3D.cuh"
 

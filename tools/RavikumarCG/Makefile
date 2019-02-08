@@ -1,2 +1,2 @@
 cg_test:
-	g++ RavikumarCG.cpp -std=c++11 -O3 -L ../../shared -I ../../include -lproteinManager
+	g++ RavikumarCG.cpp -std=c++11 -O3   -lproteinManager

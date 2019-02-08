@@ -1,9 +1,9 @@
-#include <proteinManager.hpp>
+#include <proteinManager/proteinManager.hpp>
 
 #define DEBUG
 
 #include "massesManager.hpp"
-#include "../centroid/centerOfMass.hpp"
+#include "../centers/centerOfMass.hpp"
 
 int main(){
     

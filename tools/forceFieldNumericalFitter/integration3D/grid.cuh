@@ -18,7 +18,7 @@
 #include <thrust/host_vector.h>
 #include <thrust/device_vector.h>
 
-#include <proteinManager.hpp>
+#include <proteinManager/proteinManager.hpp>
 
 namespace proteinManager{
 namespace integrator{
