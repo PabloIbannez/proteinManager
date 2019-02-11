@@ -31,6 +31,7 @@ namespace proteinManager {
                               ((C12        , c12        ,real       )) \
                               ((C6         , c6         ,real       )) \
                               ((SolvE      , solvE      ,real       )) \
+                              ((Surf       , surf       ,bool       )) \
                               ((SASA       , SASA       ,real       )) 
                               
 

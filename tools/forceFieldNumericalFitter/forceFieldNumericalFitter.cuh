@@ -18,6 +18,7 @@
 #include <proteinManager/proteinManager.hpp>
 
 #include "./integration3D/integrator3D.cuh"
+#include "./potential.cuh"
 
 namespace proteinManager{
 namespace ff_fitting{
@@ -30,11 +31,11 @@ namespace ff_fitting{
         refPotType refPot_;
         objPotType objPot_;
         
-		proteinManager::STRUCTURE& refStruct_;
-		proteinManager::STRUCTURE& objStruct_;
+		proteinManager::MODEL& refModel_;
+		proteinManager::MODEL& objModel_;
 	
-		std::vector<std::shared_ptr<proteinManager::ATOM>> refStructAtom;
-		std::vector<std::shared_ptr<proteinManager::ATOM>> objStructAtom;
+		std::vector<std::shared_ptr<proteinManager::ATOM>> refModelAtom;
+		std::vector<std::shared_ptr<proteinManager::ATOM>> objModelAtom;
 		
 		//integral matrices
 		
@@ -67,12 +68,12 @@ namespace ff_fitting{
                 int samplesPerIntegral = -1;
             };
             
-			forceFieldFitter(proteinManager::STRUCTURE& refStruct,
-                             proteinManager::STRUCTURE& objStruct, 
+			forceFieldFitter(proteinManager::MODEL& refModel,
+                             proteinManager::MODEL& objModel, 
                              GridIntegration intGrid,
                              refPotType refPot,
                              objPotType objPot
-                             ):refStruct_(refStruct),objStruct_(objStruct),refPot_(refPot),objPot_(objPot){
+                             ):refModel_(refModel),objModel_(objModel),refPot_(refPot),objPot_(objPot){
 
                 
 				this->updateAtomVectors();
@@ -88,12 +89,12 @@ namespace ff_fitting{
                 
             }
             
-            forceFieldFitter(proteinManager::STRUCTURE& refStruct,
-                             proteinManager::STRUCTURE& objStruct, 
+            forceFieldFitter(proteinManager::MODEL& refModel,
+                             proteinManager::MODEL& objModel, 
                              MonteCarloIntegration intMC,
                              refPotType refPot,
                              objPotType objPot
-                             ):refStruct_(refStruct),objStruct_(objStruct),refPot_(refPot),objPot_(objPot){
+                             ):refModel_(refModel),objModel_(objModel),refPot_(refPot),objPot_(objPot){
 
                 
 				this->updateAtomVectors();
@@ -113,22 +114,20 @@ namespace ff_fitting{
 			
 			void updateAtomVectors(){
 				
-				refStructAtom = std::vector<std::shared_ptr<proteinManager::ATOM>>();
-				objStructAtom = std::vector<std::shared_ptr<proteinManager::ATOM>>();
+				refModelAtom = std::vector<std::shared_ptr<proteinManager::ATOM>>();
+				objModelAtom = std::vector<std::shared_ptr<proteinManager::ATOM>>();
 				
-				for(proteinManager::MODEL& md : refStruct_.model()) {
-				for(proteinManager::CHAIN& ch : md.chain())         {
+				for(proteinManager::CHAIN& ch : refModel_.chain())  {
 				for(proteinManager::RESIDUE& res : ch.residue())    {
 				for(proteinManager::ATOM& atm : res.atom())         {
-								refStructAtom.push_back(std::make_shared<proteinManager::ATOM>(atm));
-				}}}}
+								refModelAtom.push_back(std::make_shared<proteinManager::ATOM>(atm));
+				}}}
 				
-				for(proteinManager::MODEL& md : objStruct_.model()) {
-				for(proteinManager::CHAIN& ch : md.chain())         {
+				for(proteinManager::CHAIN& ch : objModel_.chain())  {
 				for(proteinManager::RESIDUE& res : ch.residue())    {
 				for(proteinManager::ATOM& atm : res.atom())         {
-								objStructAtom.push_back(std::make_shared<proteinManager::ATOM>(atm));
-				}}}}
+								objModelAtom.push_back(std::make_shared<proteinManager::ATOM>(atm));
+				}}}
 				
 			}
 			
@@ -138,13 +137,12 @@ namespace ff_fitting{
 				
                 //Determining box
                 
-				real3 pos = refStruct_.model()[0].chain()[0].residue()[0].atom()[0].getAtomCoord();
+				real3 pos = refModel_.chain()[0].residue()[0].atom()[0].getAtomCoord();
 				
 				real3 boxMin = pos - cutOff;
 				real3 boxMax = pos + cutOff;
 				
-				for(proteinManager::MODEL& md : refStruct_.model()) {
-				for(proteinManager::CHAIN& ch : md.chain())         {
+				for(proteinManager::CHAIN& ch : refModel_.chain())  {
 				for(proteinManager::RESIDUE& res : ch.residue())    {
 				for(proteinManager::ATOM& atm : res.atom())         {
 					pos = atm.getAtomCoord();
@@ -157,7 +155,7 @@ namespace ff_fitting{
 					if(pos.y + cutOff > boxMax.y) boxMax.y = pos.y + cutOff;
 					if(pos.z + cutOff > boxMax.z) boxMax.z = pos.z + cutOff;
 						
-				}}}}
+				}}}
 				
                 ////////////////////////////////////////////////////////
                 
@@ -175,22 +173,22 @@ namespace ff_fitting{
                 potProduct<objPotType,refPotType> potProductObjRef(objPot_,refPot_);
                 potProduct<objPotType,objPotType> potProductObjObj(objPot_,objPot_);
 				
-				matrixObjRef.resize(objStructAtom.size(),refStructAtom.size());
-				matrixObjObj.resize(objStructAtom.size(),objStructAtom.size());
+				matrixObjRef.resize(objModelAtom.size(),refModelAtom.size());
+				matrixObjObj.resize(objModelAtom.size(),objModelAtom.size());
                 
-				for(int i=0;i<objStructAtom.size();i++){
+				for(int i=0;i<objModelAtom.size();i++){
 					std::cout << i << std::endl;
-					for(int j=0;j<refStructAtom.size();j++){
-                        real3 atmRef = refStructAtom[j]->getAtomCoord();
-						real3 atmObj = objStructAtom[i]->getAtomCoord();
+					for(int j=0;j<refModelAtom.size();j++){
+                        real3 atmRef = refModelAtom[j]->getAtomCoord();
+						real3 atmObj = objModelAtom[i]->getAtomCoord();
 						
 						real3 dst = atmRef - atmObj;
                         
-                        potProductObjRef.pt1_.setParameters(*refStructAtom[j]);
+                        potProductObjRef.pt1_.setParameters(*refModelAtom[j]);
                         
 						if(dot(dst,dst) < cutOff2 and !potProductObjRef.pt1_.isNull()) {
                             
-                            potProductObjRef.setParametersLinealFit(*objStructAtom[i],*refStructAtom[j]);
+                            potProductObjRef.setParametersLinealFit(*objModelAtom[i],*refModelAtom[j]);
                             
                             if(currentIntegrator == grid ){
                                 matrixObjRef(i,j) = integGrid.computeIntegral(potProductObjRef);
@@ -209,17 +207,17 @@ namespace ff_fitting{
 				}
 				
 				
-				for(int i=0;i<objStructAtom.size();i++){
+				for(int i=0;i<objModelAtom.size();i++){
 					std::cout << i << std::endl;
-					for(int j=i;j<objStructAtom.size();j++){
-						real3 atmObj1 = objStructAtom[i]->getAtomCoord();
-						real3 atmObj2 = objStructAtom[j]->getAtomCoord();
+					for(int j=i;j<objModelAtom.size();j++){
+						real3 atmObj1 = objModelAtom[i]->getAtomCoord();
+						real3 atmObj2 = objModelAtom[j]->getAtomCoord();
 						
 						real3 dst = atmObj1 - atmObj2;
 						
 						if(dot(dst,dst) < cutOff2 ) {
                             
-                            potProductObjObj.setParametersLinealFit(*objStructAtom[i],*objStructAtom[j]);
+                            potProductObjObj.setParametersLinealFit(*objModelAtom[i],*objModelAtom[j]);
                             
                             if(currentIntegrator == grid ){
                                 matrixObjObj(i,j) = integGrid.computeIntegral(potProductObjObj);
@@ -246,18 +244,17 @@ namespace ff_fitting{
                 
                 this->computeMatrices();
 				
-				vectorRef.resize(refStructAtom.size());
-				vectorObj_fit.resize(objStructAtom.size());
+				vectorRef.resize(refModelAtom.size());
+				vectorObj_fit.resize(objModelAtom.size());
 				
-				for(int i=0;i<refStructAtom.size();i++){
-                    vectorRef[i] = refPot_.getInteractionParmLinealFit(*refStructAtom[i]);
+				for(int i=0;i<refModelAtom.size();i++){
+                    vectorRef[i] = refPot_.getInteractionParmLinealFit(*refModelAtom[i]);
 				}
 				
                 vectorObj_fit = matrixObjObj.colPivHouseholderQr().solve(matrixObjRef*vectorRef);
                 
                 int i=0;
-                for(proteinManager::MODEL& md : objStruct_.model()) {
-				for(proteinManager::CHAIN& ch : md.chain())         {
+				for(proteinManager::CHAIN& ch : objModel_.chain())  {
 				for(proteinManager::RESIDUE& res : ch.residue())    {
 				for(proteinManager::ATOM& atm : res.atom())         {
                                 objPot_.setInteractionParmLinealFit(atm,vectorObj_fit[i]);
@@ -266,7 +263,7 @@ namespace ff_fitting{
                                 std::cout << vectorObj_fit[i] << std::endl;
                                 #endif
 								i++;
-				}}}}
+				}}}
 				
 				this->updateAtomVectors();
 			}
@@ -278,13 +275,13 @@ namespace ff_fitting{
 				matrixObjRef.conservativeResize(matrixObjRef.rows()+1,matrixObjRef.cols());
 				matrixObjObj.conservativeResize(matrixObjObj.rows()+1,matrixObjObj.cols()+1);
 				
-				vectorRef.resize(refStructAtom.size());
-				vectorObj_fit.resize(objStructAtom.size()+1);
+				vectorRef.resize(refModelAtom.size());
+				vectorObj_fit.resize(objModelAtom.size()+1);
 				
 				///////////////////////////////////////////////////////////////////
 				
-				for(int i=0;i<refStructAtom.size();i++){
-                    vectorRef[i] = refPot_.getInteractionParmLinealFit(*refStructAtom[i]);
+				for(int i=0;i<refModelAtom.size();i++){
+                    vectorRef[i] = refPot_.getInteractionParmLinealFit(*refModelAtom[i]);
 				}
 				
 				for(int i=0; i < matrixObjRef.cols(); i++){
@@ -303,8 +300,7 @@ namespace ff_fitting{
 				vectorObj_fit = matrixObjObj.colPivHouseholderQr().solve(matrixObjRef*vectorRef);
                 
                 int i=0;
-                for(proteinManager::MODEL& md : objStruct_.model()) {
-				for(proteinManager::CHAIN& ch : md.chain())         {
+				for(proteinManager::CHAIN& ch : objModel_.chain())  {
 				for(proteinManager::RESIDUE& res : ch.residue())    {
 				for(proteinManager::ATOM& atm : res.atom())         {
                                 objPot_.setInteractionParmLinealFit(atm,vectorObj_fit[i]);
@@ -313,7 +309,7 @@ namespace ff_fitting{
                                 std::cout << vectorObj_fit[i] << std::endl;
                                 #endif
 								i++;
-				}}}}
+				}}}
 				
 				#ifdef DEBUG
 				
@@ -333,19 +329,17 @@ namespace ff_fitting{
                     real3 totalDipoleRef = {0,0,0};
                     real3 totalDipoleObj = {0,0,0};
                     
-                    for(proteinManager::MODEL& md : refStruct_.model()) {
-                    for(proteinManager::CHAIN& ch : md.chain())         {
+                    for(proteinManager::CHAIN& ch : refModel_.chain())  {
                     for(proteinManager::RESIDUE& res : ch.residue())    {
                     for(proteinManager::ATOM& atm : res.atom())         {
                                     totalDipoleRef += atm.getAtomCoord()*refPot_.getInteractionParmLinealFit(atm);
-                    }}}}
+                    }}}
                     
-                    for(proteinManager::MODEL& md : objStruct_.model()) {
-                    for(proteinManager::CHAIN& ch : md.chain())         {
+                    for(proteinManager::CHAIN& ch : objModel_.chain())  {
                     for(proteinManager::RESIDUE& res : ch.residue())    {
                     for(proteinManager::ATOM& atm : res.atom())         {
                                     totalDipoleObj += atm.getAtomCoord()*objPot_.getInteractionParmLinealFit(atm);
-                    }}}}
+                    }}}
                     
                     std::cout << "Ref dipole: " << totalDipoleRef << " Obj dipole: " << totalDipoleObj << std::endl;
 				

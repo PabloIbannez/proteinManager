@@ -9,6 +9,8 @@
 !*/
 
 build/
+*.so
 *.o
 *.out
+*.top
 

@@ -38,20 +38,18 @@ int main(){
     potentialRef potRef(1,0.606962);
     potentialObj potObj(1,0.606962);
     
-    /*
     proteinManager::ff_fitting::forceFieldFitter<potentialRef,potentialObj>::MonteCarloIntegration mc;
     mc.pointsPerIntegral = 100000;
     mc.samplesPerIntegral = 10;
     
-    proteinManager::ff_fitting::forceFieldFitter<potentialRef,potentialObj> test(pdbRef,pdbObj,mc,potRef,potObj);
-    */
+    proteinManager::ff_fitting::forceFieldFitter<potentialRef,potentialObj> test(pdbRef.model(0),pdbObj.model(0),mc,potRef,potObj);
     
-    
+    /*
     proteinManager::ff_fitting::forceFieldFitter<potentialRef,potentialObj>::GridIntegration gInt;
     gInt.cellSize = 0.05;
     
     proteinManager::ff_fitting::forceFieldFitter<potentialRef,potentialObj> test(pdbRef,pdbObj,gInt,potRef,potObj);
-    
+    */
     test.computeNewParametersTotalChargeConstraint();
 	
     

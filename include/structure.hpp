@@ -97,6 +97,8 @@ namespace proteinManager {
                      std::string chainID,
                      std::string resName, int resSeq, std::string iCode,
                      int serial, std::string name);
+                     
+        void renumber();
     
     };
 }

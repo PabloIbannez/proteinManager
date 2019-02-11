@@ -300,8 +300,6 @@ namespace proteinManager {
                                             };
                             occupancy  =   1;
                             tempFactor =   0;
-                            element    =  "";
-                            charge     =   0;
                             radius     =     real(std::stod(line.substr(54,6)));
                             SASA       =     real(std::stod(line.substr(60,6)));
                         } catch (const std::exception& e) {
@@ -340,15 +338,12 @@ namespace proteinManager {
                 switch(inputFormat) {
                     case PDB:
                         
-
-                        modelVector[modelCount].chain(chainID).residue(resSeq).atom().back().setAtomElement(element);
                         modelVector[modelCount].chain(chainID).residue(resSeq).atom().back().setAtomCharge(charge);
         
                         break;
         
                     case PDBQ:
                         
-                        modelVector[modelCount].chain(chainID).residue(resSeq).atom().back().setAtomElement(element);
                         modelVector[modelCount].chain(chainID).residue(resSeq).atom().back().setAtomCharge(charge);
         
                         break;
@@ -612,6 +607,41 @@ namespace proteinManager {
         modelVector.back().addAtom(chainID,
                                 resName,resSeq,iCode,
                                 serial,name);
+    }
+    
+    void STRUCTURE::renumber(){
+        
+        std::vector<std::string> chainNames =  {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z",
+                                                "a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z",
+                                                "0","1","2","3","4","5","6","7","8","9"};
+        
+        int modelCount;
+        int chainCount;
+        int resCount  ;
+        int atomCount ;
+        
+        modelCount = 1;
+        atomCount  = 1;
+        for(MODEL&   mdl : this->model()){
+            mdl.setModelId(modelCount);
+            modelCount ++ ;
+            chainCount = 0;
+        for(CHAIN&   ch  : mdl.chain()  ){
+            ch.setChainId(chainNames[chainCount]);
+            chainCount ++;
+            if(chainCount == chainNames.size()){
+                std::stringstream ss;
+                ss << "ERROR (" << __FUNCTION__ << "). The number of chains is greater than the number of possible characters to name them.";
+                throw std::runtime_error(ss.str());
+            }
+            resCount   = 1;
+        for(RESIDUE& res : ch.residue() ){
+            res.setResSeq(resCount);
+            resCount ++;
+        for(ATOM&    atm : res.atom()   ){
+            atm.setAtomSerial(atomCount);
+            atomCount ++;
+        }}}}
     }
     
     std::ostream& operator<<(std::ostream& os, const STRUCTURE& structure) {

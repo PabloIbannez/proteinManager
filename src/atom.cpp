@@ -216,7 +216,7 @@ namespace proteinManager {
             std::setw(8) << a.getAtomRadius()     ;
             break;
         case PDRS:
-        
+            
             os << std::left << std::fixed            <<
             std::setw(6) << "ATOM"                   <<
             std::right                               <<
@@ -247,16 +247,7 @@ namespace proteinManager {
             std::setprecision(2)                     <<
             std::setw(6) << a.getAtomRadius()        <<
             std::setw(6) << a.getAtomSASA()          <<
-            "          "                             <<
-            std::setw(2) << a.getAtomElement()    ;
-        
-            if(int(a.getAtomCharge())==0) {
-                os << std::left << std::fixed        <<
-                std::setw(2) << "";
-            } else {
-                os << std::left << std::fixed        <<
-                std::setw(2) << int(a.getAtomCharge());
-            }
+            "          "                             ;
             break;
         case SP:
             os << std::left << std::fixed << std::setprecision(6) <<

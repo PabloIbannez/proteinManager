@@ -1,3 +1,6 @@
+#ifndef POTENTIAL_CUH
+#define POTENTIAL_CUH
+
 namespace proteinManager{
 namespace ff_fitting{
     
@@ -269,3 +272,5 @@ namespace ff_fitting{
     };
     
 }}
+
+#endif

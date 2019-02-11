@@ -3,6 +3,7 @@ ALA
 ALAN
 [ARG]
 ARG
+ARGC
 [ASN]
 ASN
 [ASH]
@@ -41,6 +42,7 @@ LYSN
 LYSC
 [MET]
 MET
+METN
 [PHE]
 PHE
 [PRO]
@@ -48,6 +50,7 @@ PRO
 PROC
 [SER]
 SER
+SERC
 [THR]
 THR
 [TRP]
@@ -56,3 +59,4 @@ TRP
 TYR
 [VAL]
 VAL
+VALN
