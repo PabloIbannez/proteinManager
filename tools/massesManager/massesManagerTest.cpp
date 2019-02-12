@@ -9,12 +9,12 @@ int main(){
     
     proteinManager::STRUCTURE pdb;
     
-    pdb.loadPDB("1akiClear.pdb");
+    pdb.loadPDB("1aki.pdb");
     
     proteinManager::massesManager mM;
     
     mM.loadMassesData("massesData/atomMasses.dat");
-    mM.applyMassesData(pdb);
+    mM.applyMassesData(pdb.model()[0]);
     
-    std::cout << proteinManager::computeCenterOfMass(pdb) << std::endl;
+    std::cout << proteinManager::computeCenterOfMass(pdb.model()[0]) << std::endl;
 }

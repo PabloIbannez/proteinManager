@@ -69,7 +69,7 @@ namespace proteinManager{
                 #endif
             }
             
-            void applyMassesData(proteinManager::STRUCTURE& structIn){
+            void applyMassesData(proteinManager::MODEL& mdlIn){
 			
                 std::stringstream ss;
                 
@@ -80,8 +80,7 @@ namespace proteinManager{
                     
                 }
                 
-                for(proteinManager::MODEL& md : structIn.model()) {
-                for(proteinManager::CHAIN& ch : md.chain()) {
+                for(proteinManager::CHAIN& ch : mdlIn.chain()) {
                 for(proteinManager::RESIDUE& res : ch.residue()) {
                 for(proteinManager::ATOM& atm : res.atom()) {
                     if(massesData.count(atm.getAtomName()) == 0){
@@ -95,7 +94,15 @@ namespace proteinManager{
                     } else {
                         atm.setAtomMass(massesData[atm.getAtomName()]);
                     }
-                }}}}
+                }}}
+                
+            }
+            
+            void applyMassesData(proteinManager::STRUCTURE& structIn){
+                
+                for(proteinManager::MODEL& md : structIn.model()) {
+                    applyMassesData(md);
+                }
                 
             }
         
