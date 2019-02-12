@@ -141,10 +141,10 @@ namespace ffManager{
 		#endif
 	    }
 	    
-	    //This function set the force field values (chg,c6,c12,solvE) for each atom in the structure structIn
-	    void applyForceFieldData(proteinManager::STRUCTURE& structIn){
-			
-			std::stringstream ss;
+        //This function set the force field values (chg,c6,c12,solvE) for each atom in the structure mdlIn
+        void applyForceFieldData(proteinManager::MODEL& mdlIn){
+            
+            std::stringstream ss;
 			
 			if(forceFieldData.empty()){
 				ss.clear();
@@ -153,8 +153,7 @@ namespace ffManager{
 				
 			}
 			
-			for(proteinManager::MODEL& md : structIn.model()) {
-			for(proteinManager::CHAIN& ch : md.chain()) {
+			for(proteinManager::CHAIN& ch : mdlIn.chain()) {
 			for(proteinManager::RESIDUE& res : ch.residue()) {
 				if(forceFieldData.count(res.getResName()) == 0){
 					ss.clear();
@@ -180,8 +179,15 @@ namespace ffManager{
                         atm.setAtomSolvE((*forceFieldData[res.getResName()])[atm.getAtomName()]->solvE);
 					}
 					}
-			}}}
-		
+			}}
+        }
+        
+	    //This function set the force field values (chg,c6,c12,solvE) for each atom in the structure structIn
+	    void applyForceFieldData(proteinManager::STRUCTURE& structIn){
+			
+			for(proteinManager::MODEL& md : structIn.model()) {
+                applyForceFieldData(md);
+            }
 	    }
     };
     
