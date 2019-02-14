@@ -339,6 +339,7 @@ namespace proteinManager {
                     case PDB:
                         
                         modelVector[modelCount].chain(chainID).residue(resSeq).atom().back().setAtomCharge(charge);
+                        modelVector[modelCount].chain(chainID).residue(resSeq).atom().back().setAtomElement(element);
         
                         break;
         

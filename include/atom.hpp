@@ -117,6 +117,21 @@ namespace proteinManager {
         #undef SET_ATOM_PROPERTY_T
         #undef SET_ATOM_PROPERTY_R
         #undef SET_ATOM_PROPERTY
+        
+        ////////////////////////////////////////////////////////////////////
+        
+        // A set of functions are declared to scale properties (if they can be scaled)
+        // of the current atom.
+        
+        #define SCALE_ATOM_PROPERTY_T(Name,type,name)  SCALE_ATOM_PROPERTY_R(Name,type,name)
+        #define SCALE_ATOM_PROPERTY_R(Name,type,name)  void scaleAtom ## Name( real scaleFactor ) ;
+        #define SCALE_ATOM_PROPERTY(r, data, tuple) SCALE_ATOM_PROPERTY_T(PROPNAME_CAPS(tuple),PROPTYPE(tuple),PROPNAME(tuple))
+        
+            ATOM_PROPERTY_LOOP(SCALE_ATOM_PROPERTY)
+        
+        #undef SCALE_ATOM_PROPERTY_T
+        #undef SCALE_ATOM_PROPERTY_R
+        #undef SCALE_ATOM_PROPERTY
     
     };
 }

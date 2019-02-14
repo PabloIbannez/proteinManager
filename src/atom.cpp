@@ -1,6 +1,49 @@
 #include "atom.hpp"
 
 namespace proteinManager {
+    
+    /*
+    #define SFINAE_DEFINE_HAS_MEMBER(name, X)                     \
+    template <typename T>  \
+    class has_##name  \
+    {  \
+            using one = char;  \
+            using two = long;  \
+        \
+            template <class C> static constexpr inline one test( decltype(&C::X) ) ;    \
+            template <class C> static constexpr inline two test(...);  \
+        \
+        public:  \
+            static constexpr bool value = std::is_same<decltype(test<T>(0)),one>::value; \
+    };  \
+    
+    SFINAE_DEFINE_HAS_MEMBER(mult, operator*)
+    */
+    
+    template<class T, bool active>
+    struct hasMultDelegator;
+    
+    template<class T>
+    struct hasMultDelegator<T, true>{
+        static T call(T prop,real factor, std::string propName){    
+            return prop*factor;
+        }
+    };
+    
+    template<class T>
+        struct hasMultDelegator<T, false>{
+            static T call(T prop,real factor, std::string propName){    
+            std::stringstream ss;
+            ss << "The proterty " << propName << " con not been scaled.";
+            throw std::runtime_error(ss.str());
+        }
+    };
+    
+    template<class T>
+    T applyScale(T prop,real factor,std::string propName){
+        //return hasMultDelegator<T, has_mult<T>::value>::call(prop,factor,propName);
+        return hasMultDelegator<T, std::is_same<T,real>::value or std::is_same<T,real3>::value>::call(prop,factor,propName);
+    }
 
     ATOM::ATOM(int serial,std::string name,RESIDUE* parentResidue){
 
@@ -92,6 +135,18 @@ namespace proteinManager {
     #undef SET_ATOM_PROPERTY_IMPL_T
     #undef SET_ATOM_PROPERTY_IMPL_R
     #undef SET_ATOM_PROPERTY_IMPL
+    
+    ////////////////////////////////////////////////////////////////////
+    
+    #define SCALE_ATOM_PROPERTY_IMPL_T(type,Name,name)  SCALE_ATOM_PROPERTY_IMPL_R(type,Name,name)
+    #define SCALE_ATOM_PROPERTY_IMPL_R(type,Name,name)  void ATOM::scaleAtom##Name( real scaleFactor ) {atomProperties[#name] = applyScale<type>(boost::any_cast<type>(atomProperties[#name]),scaleFactor,#Name);}
+    #define SCALE_ATOM_PROPERTY_IMPL(r, data, tuple) SCALE_ATOM_PROPERTY_IMPL_T(PROPTYPE(tuple),PROPNAME_CAPS(tuple),PROPNAME(tuple))
+    
+        ATOM_PROPERTY_LOOP(SCALE_ATOM_PROPERTY_IMPL)
+    
+    #undef SCALE_ATOM_PROPERTY_IMPL_T
+    #undef SCALE_ATOM_PROPERTY_IMPL_R
+    #undef SCALE_ATOM_PROPERTY_IMPL
     
     ////////////////////////////////////////////////////////////////////
     
