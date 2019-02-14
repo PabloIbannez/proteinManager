@@ -9,4 +9,4 @@ CPU= $(DEBUG_CPU) -funroll-loops -ffinite-math-only -fno-signaling-nans -fno-mat
 BASIC_LINE= nvcc -lineinfo $(DEBUG_GPU) -ccbin="$(CXX)" -Xcompiler="$(CPU)" -src-in-ptx -gencode arch=compute_$(ARCH),code=sm_$(ARCH) -x cu -std=c++11 --expt-relaxed-constexpr
 
 proteinCG:
-	$(BASIC_LINE) -lproteinManager proteinCG.cpp
+	$(BASIC_LINE) -lproteinManager proteinCG_test.cpp

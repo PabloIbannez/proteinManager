@@ -72,17 +72,17 @@ namespace integrator3D_MC_ns{
 			~integrator3D_MC(){
 				
 				if(d_temp_storage != NULL){
-					cudaFree(&d_temp_storage);
+					cudaFree(d_temp_storage);
 				}
 				
-				cudaFree(&sumResult);
+				cudaFree(sumResult);
 				cudaStreamDestroy(integratorStream);
 			}
             
             void free(){
                 
                 if(d_temp_storage != NULL){
-					cudaFree(&d_temp_storage);
+					cudaFree(d_temp_storage);
                     d_temp_storage = NULL;
                     N_temp = 0;
 				}
