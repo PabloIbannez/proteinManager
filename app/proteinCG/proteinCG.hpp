@@ -168,34 +168,42 @@ class coarseGrainedTop{
             
         }
         
+        std::shared_ptr<STRUCTURE> getStructureOut(){
+            return strOut_;
+        }
+        
         void output(std::ostream& out){
             
-            int atomCount = 1;
+            int atomCount = 0;
             for(MODEL&   mdl : (*strOut_).model()){
             for(CHAIN&   ch  : mdl.chain()  ){
             for(RESIDUE& res : ch.residue() ){
             for(ATOM&    atm : res.atom()   ){
                 out << std::right
-                    << std::setw(10)                    
+                    << std::fixed
+                    << std::setprecision(4)
+                    << std::setw(10)                   
                     << atomCount                       << " " 
-                    << std::setw(4)                    
+                    << std::setw(5)                    
                     << res.getResName()                << " " 
-                    << std::setw(4)                    
+                    << std::setw(5)                    
                     << mdl.getModelId()                << " " 
-                    << std::setw(6)                    
+                    << std::setw(8)                    
                     << atm.getAtomSASA()               << " " 
                     << std::setw(1)                    
-                    << ((atm.getAtomSurf()==true)?1:0) << " " 
-                    << std::setw(6)                    
+                    << atm.getAtomSurf()               << " " 
+                    << std::setw(10)                   
                     << atm.getAtomMass()               << " " 
+                    << std::setw(10)                   
                     << atm.getAtomCoord()              << " " 
-                    << std::setw(6)                    
+                    << std::setw(10)                   
+                    << std::setprecision(5)            
                     << atm.getAtomC12()                << " " 
-                    << std::setw(6)                    
+                    << std::setw(10)                   
                     << atm.getAtomC6()                 << " "
-                    << std::setw(6)                    
+                    << std::setw(10)                   
                     << atm.getAtomCharge()             << " "
-                    << std::setw(6)                    
+                    << std::setw(10)                   
                     << atm.getAtomSolvE()              << std::endl;
                 
                 atomCount ++;

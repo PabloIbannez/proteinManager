@@ -20,7 +20,7 @@ namespace ffManager{
 	real charge;
 	real c6;
 	real c12;
-    real solvE;
+	real solvE;
 	
 	atomFFproperties(real charge,real c6,real c12,real solvE):charge(charge),c6(c6),c12(c12),solvE(solvE){}
     };

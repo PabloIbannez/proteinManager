@@ -264,7 +264,7 @@ namespace coarseGrainedManager{
 		
 		bool patternMatching;
 		int  atomCount;
-        int  addedAtomCount = 1;
+        int  addedAtomCount = 0;
 		
 		for(proteinManager::MODEL& md : structIn.model()) {
 			structOut.addModel(md.getModelId());

@@ -622,7 +622,7 @@ namespace proteinManager {
         int atomCount ;
         
         modelCount = 1;
-        atomCount  = 1;
+        atomCount  = 0;
         for(MODEL&   mdl : this->model()){
             mdl.setModelId(modelCount);
             modelCount ++ ;

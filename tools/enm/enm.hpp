@@ -174,8 +174,8 @@ namespace proteinManager{
             os << std::setw(5) << bd.ptr1->getAtomSerial() <<
                   std::setw(5) << bd.ptr2->getAtomSerial() <<
                   std::setprecision(6)                     <<
-                  std::setw(12) << bd.r0                   <<
-                  std::setw(12) << bd.k                    << std::endl;
+                  std::setw(12) << bd.k                    <<
+                  std::setw(12) << bd.r0                   << std::endl;
             
             /*
             ///////////////////////////////////////////
