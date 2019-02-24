@@ -1,5 +1,8 @@
 #include <proteinManager/proteinManager.hpp>
 
+#include <eigen3/Eigen/Eigen>
+#include <random>
+
 namespace proteinManager{
     
     namespace geometricTransformations{
@@ -50,6 +53,79 @@ namespace proteinManager{
         void uniformScaling(T& input,real ratio){
             homotheticTransformation(input,{0,0,0},ratio);
         }
+        
+        ////////////////////////////////////////////////////////////////
+        
+        void rotation(ATOM& atm,const real3 center,const Eigen::Quaternion<real> quaternion){
+            
+            real3 oldCoord = atm.getAtomCoord();
+            
+            Eigen::Vector3<real>  p(oldCoord.x,oldCoord.y,oldCoord.z);
+            Eigen::Vector3<real>  p_new;
+            
+            Eigen::Vector3<real>  centerEigen(center.x,center.y,center.z);
+            p_new = quaternion*(p-centerEigen)+centerEigen;
+            
+            atm.setAtomCoord({p_new.x(),p_new.y(),p_new.z()});
+        }
+        
+        void rotation(RESIDUE& res,const real3 center,const Eigen::Quaternion<real> quaternion){
+            
+            for(ATOM& atm : res.atom()){
+                rotation(atm,center,quaternion);
+            }
+        }
+        
+        void rotation(CHAIN& ch,const real3 center,const Eigen::Quaternion<real> quaternion){
+            
+            for(RESIDUE& res : ch.residue()){
+                rotation(res,center,quaternion);
+            }
+        }
+        
+        void rotation(MODEL& mdl,const real3 center,const Eigen::Quaternion<real> quaternion){
+            
+            for(CHAIN& ch : mdl.chain()){
+                rotation(ch,center,quaternion);
+            }
+        }
+        
+        void rotation(STRUCTURE& str,const real3 center,const Eigen::Quaternion<real> quaternion){
+            
+            for(MODEL& mdl : str.model()){
+                rotation(mdl,center,quaternion);
+            }
+        }
+        
+        template<class entityType>
+        void randomRotation(entityType& entity,const real3 center, std::mt19937& gen){
+            
+            std::uniform_real_distribution<real> distr(0.0,1.0);
+            
+            //Effective Sampling and Distance Metrics for 3D Rigid Body Path Planning
+            //James J. Kuffner, 2004
+            
+            real s = distr(gen);
+            
+            real sigma1 = std::sqrt(real(1.0)-s);
+            real sigma2 = std::sqrt(s);
+            real theta1 = real(M_PI)*distr(gen);
+            real theta2 = real(M_PI)*distr(gen);
+            
+            //x = sin(θ1) ∗σ1;
+            //y = cos(θ1) ∗σ1;
+            //z = sin(θ2) ∗σ2;
+            //w = cos(θ2) ∗σ2;
+            
+            Eigen::Quaternion<real> randomQuaternion(std::sin(theta1)*sigma1,
+                                                     std::cos(theta1)*sigma1,
+                                                     std::sin(theta2)*sigma2,
+                                                     std::cos(theta2)*sigma2);
+            
+            rotation(entity,center,randomQuaternion);
+        }
+        
+        ////////////////////////////////////////////////////////////////
     }
     
     
