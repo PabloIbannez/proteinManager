@@ -45,7 +45,6 @@ namespace coarseGrainedManager{
 	};
 	
 	
-	
 	class coarseGrainedGenerator{
 		
 		private:
@@ -54,7 +53,6 @@ namespace coarseGrainedManager{
 		
 		std::map<std::string,aminoAcidType*> aminoAcidTypes;
 		std::map<std::string,beadType*> beadTypes;
-		
 		
 		public:
 		
@@ -256,8 +254,7 @@ namespace coarseGrainedManager{
 		}*/
 		}
 		
-		
-        template<class mSch>
+		template<class mappingSchemeType>
 		void applyCoarseGrainedMap(proteinManager::STRUCTURE& structIn,proteinManager::STRUCTURE& structOut){
 		
 		std::stringstream ss;
@@ -265,6 +262,8 @@ namespace coarseGrainedManager{
 		bool patternMatching;
 		int  atomCount;
         int  addedAtomCount = 0;
+        
+        mappingSchemeType mSch;
 		
 		for(proteinManager::MODEL& md : structIn.model()) {
 			structOut.addModel(md.getModelId());
@@ -304,7 +303,7 @@ namespace coarseGrainedManager{
                             resOut.addAtom(addedAtomCount,bd);
                             addedAtomCount++;
                             
-                            mSch::mappingScheme(res,resOut,bd,beadTypes[bd]->atomComponents);
+                            mSch.mappingScheme(res,resOut,bd,beadTypes[bd]->atomComponents);
                             
                         }
 					
