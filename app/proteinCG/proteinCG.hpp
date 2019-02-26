@@ -56,7 +56,7 @@ class coarseGrainedTop{
             massesM.applyMassesData(*strIn_);
             ffM.applyForceFieldData(*strIn_);
             
-            cgM.applyCoarseGrainedMap<coarseGrainedManager::coarseGrainedMappingSchemes::sasa>(*strIn_,*strOut_);
+            cgM.applyCoarseGrainedMap<coarseGrainedManager::coarseGrainedMappingSchemes::sasaFitting>(*strIn_,*strOut_);
             
         }
         

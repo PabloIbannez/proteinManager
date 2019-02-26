@@ -1,3 +1,5 @@
+#define DEBUG
+
 #include "./proteinCG.hpp"
 
 #include "../compIntEnergy/compIntEnergy.hpp"
@@ -23,11 +25,11 @@ int main(int argc, char *argv[]){
     cgTop.loadChargesSurf(1,"./proteins/barnase/barnase.charge");
     cgTop.loadChargesSurf(2,"./proteins/barstar/barstar.charge");
     
-    cgTop.fit_C6(1,1,0.9);
-    cgTop.fit_C12(1,1,0.779078);
-    
-    cgTop.fit_C6(2,1,0.9);
-    cgTop.fit_C12(2,1,0.779078);
+    //cgTop.fit_C6(1,1,0.9);
+    //cgTop.fit_C12(1,1,0.779078);
+    //
+    //cgTop.fit_C6(2,1,0.9);
+    //cgTop.fit_C12(2,1,0.779078);
     
     std::shared_ptr<STRUCTURE> strOut = cgTop.getStructureOut();
     

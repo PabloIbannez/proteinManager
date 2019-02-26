@@ -83,9 +83,10 @@ namespace coarseGrainedMappingSchemes{
     struct sasaFitting{
         
         real dr = 0.01;
-        real cutOff = 5;
+        real cutOff = 2;
         
-        std::vector<real2> dstFieldValue;
+        real fieldMaxValue = 10;
+        real fieldMinValue = 0.025;
         
         std::random_device rndDevice;
         std::mt19937 rndGen;
@@ -94,24 +95,10 @@ namespace coarseGrainedMappingSchemes{
         real densityOfPoints = 100;
         
         sasaFitting(){
-            dstFieldValue.resize(int(cutOff/dr));
-            
-            for(int i=0;i<dstFieldValue.size();i++){
-                dstFieldValue[i].x = dr*i+dr;
-                dstFieldValue[i].y = real(0);
-            }
             
             rndGen.seed(rndDevice());
             unifDist = std::uniform_real_distribution<real>(0,1);
-            
-            #ifdef DEBUG
-                std::cout << "Fitting vector size: " << dstFieldValue.size() << std::endl;
-                
-                for(int i=0;i<dstFieldValue.size();i++){
-                    std::cout << dstFieldValue[i].x << " " << dstFieldValue[i].y << std::endl;
-                }
-                
-            #endif
+
         }
         
         real3 randomPointOverSphere(real radii){
@@ -123,94 +110,158 @@ namespace coarseGrainedMappingSchemes{
                     radii*std::sin(lambda)};
         }
         
-        real vdw(std::vector<ATOM>& atoms,real3 point){
+        real2 fittingBead(RESIDUE& resIn,std::vector<std::string>& beadComponents,real3 pos,real beadTotalSasa){
             
-            real value = 0;
+            if(beadTotalSasa == 0) {return {0,0};}
             
-            for(ATOM& atm : atoms){
-                real3 rap = atm.getAtomCoord()-point;
-                value += atm.getAtomC6()*std::pow(1.0/dot(rap,rap),real(3.0));
-                //std::cout << atm.getAtomC6() << " " << atm.getAtomCoord() << " " << point << " " << value << std::endl;
-            } 
+            ////////////////////////////////////////////////////////////
             
-            return value;
-        }
-        
-        real fittingBead(RESIDUE& resIn,std::vector<std::string>& beadComponents){
+            int vectorSize     = (int(cutOff/dr));
+            std::vector<real2> vdwData(vectorSize);
+            std::vector<real2> stericData(vectorSize);
             
-            #ifdef DEBUG
-                std::cout << "Fitting res: " << resIn.getResSeq() << std::endl;
-            #endif
-            
-            real3 beadCenterOfMass = {0,0,0};
-            real  beadTotalMass    = 0;
-            
-            std::vector<ATOM> beadAtoms;
-            
-            for(std::string const & atom : beadComponents){
-                
-                beadCenterOfMass += resIn.atom(atom).getAtomCoord()*resIn.atom(atom).getAtomMass();
-                beadTotalMass    += resIn.atom(atom).getAtomMass();
-                
-                beadAtoms.push_back(resIn.atom(atom));
+            for(int i=0;i<vectorSize;i++){
+                vdwData[i] = {dr*i+dr,.0};
+                stericData[i] = {dr*i+dr,.0};
             }
             
-            beadCenterOfMass = beadCenterOfMass/beadTotalMass;
-            
-            for(ATOM& atm : beadAtoms){
-                atm.setAtomCoord(atm.getAtomCoord()-beadCenterOfMass);
-            }
-            
-            for(real2& point : dstFieldValue){
-                point.y = 0;
-            }
-            
-            for(real2& point : dstFieldValue){
-                real radii = point.x;
+            //Compute field
+            for(int i=0;i<vectorSize;i++){
+                real radii = dr*i+dr;
                 int numOfPoints = int(densityOfPoints*real(4.0*M_PI)*radii*radii);
-                for(int i=0;i<numOfPoints;i++){
-                    #ifdef DEBUG
-                        std::cout << "Number of points to be generated " << numOfPoints << " " << resIn.getResName() << std::endl;
-                    #endif
-                    point.y += vdw(beadAtoms,randomPointOverSphere(radii));
+                
+                /*
+                #ifdef DEBUG
+                    std::cout << "Number of points to be generated " << numOfPoints << " " << resIn.getResName() << std::endl;
+                #endif
+                */
+                
+                for(int j=0;j<numOfPoints;j++){
+                    
+                    real valueC6  = 0;
+                    real valueC12 = 0;
+                    
+                    for(std::string const & atom : beadComponents){
+                        
+                        real3 rap = (resIn.atom(atom).getAtomCoord()-pos)-randomPointOverSphere(radii);
+                        real  invr2   = 1.0/dot(rap,rap);
+                        real  invr6   = invr2*invr2*invr2;
+                        real  invr12  = invr6*invr6;
+                        
+                        valueC6  += resIn.atom(atom).getAtomC6()*resIn.atom(atom).getAtomSASA()*invr6;
+                        valueC12 += resIn.atom(atom).getAtomC12()*resIn.atom(atom).getAtomSASA()*invr12;
+                        
+                        //valueC6  += resIn.atom(atom).getAtomC6()*invr6;
+                        //valueC12 += resIn.atom(atom).getAtomC12()*invr12;
+                        
+                    }
+                    
+                    vdwData[i].y    += valueC6/beadTotalSasa;
+                    stericData[i].y += valueC12/beadTotalSasa;
+                    
+                    //vdwData[i].y    += valueC6;
+                    //stericData[i].y += valueC12;
+                
                 }
-                point.y/=real(numOfPoints);
+                
+                vdwData[i].y/=real(numOfPoints);
+                stericData[i].y/=real(numOfPoints);
             }
+            
+            //Check if all field values are zero or -nan
+            int k;
+            for(k=0;k<vectorSize;k++){
+                if(vdwData[k].y > 0) {break;}
+                if(stericData[k].y > 0) {break;}
+            }
+            if(k==vectorSize) {return {0,0};}
+            
+            /*
+            std::cout << this->fittingPowerLaw<6>(vdwData) << std::endl;
+            std::cout << this->fittingPowerLaw<12>(stericData) << std::endl;
             
             std::ofstream test("test.dat");
-            for(real2& point : dstFieldValue){
-                test << point.x << " " << point.y << std::endl;
+            for(int i=0;i<vectorSize;i++){
+                test << dr*i+dr << " " << vdwData[i].y << " " << stericData[i].y << std::endl;
             }
             test.close();
-            
             std::cin.get();
+            */
+            ////////////////////////////////////////////////////////////
+            
+            return {this->fittingPowerLaw<6>(vdwData),this->fittingPowerLaw<12>(stericData)};
+        }
+        
+        template <int exponent>
+        real fittingPowerLaw(std::vector<real2>& data){
+            
+            int n = 0;
+            real sumLogX = 0;
+            real sumLogY = 0;
+            
+            for(real2& point : data){
+                
+                if(point.y > fieldMinValue and point.y < fieldMaxValue){
+
+                    sumLogX += std::log(point.x);
+                    sumLogY += std::log(point.y);
+                    n++;
+                }
+            }
+            
+            return exp((sumLogY + exponent*sumLogX)/n);
             
         }
                                     
         void mappingScheme(RESIDUE& resIn, RESIDUE& resOut, std::string const & beadName,std::vector<std::string>& beadComponents){
             
-            ////////////////////////////////////////////////
-
-            real3 pos = resIn.atom("CA").getAtomCoord();
+            ///////////////////////////////////////////////
             
             real totalMass  = 0;
             real totalCharge = 0;
             real totalSasa  = 0;
+            
             real weighSolvE = 0;
             
-            real test = fittingBead(resIn,beadComponents);
-            
+            real3 pos = {0,0,0};
             
             for(std::string const & atom : beadComponents){
                 
-                totalMass   += resIn.atom(atom).getAtomMass();
-                totalCharge += resIn.atom(atom).getAtomCharge();
-                totalSasa   += resIn.atom(atom).getAtomSASA();
-                weighSolvE  += resIn.atom(atom).getAtomSASA()*resIn.atom(atom).getAtomSolvE();
+                totalMass    += resIn.atom(atom).getAtomMass();
+                totalCharge  += resIn.atom(atom).getAtomCharge();
+                totalSasa    += resIn.atom(atom).getAtomSASA();
+                weighSolvE   += resIn.atom(atom).getAtomSASA()*resIn.atom(atom).getAtomSolvE();
+                pos          += resIn.atom(atom).getAtomCoord()*resIn.atom(atom).getAtomMass();;
+
             }
             
-            pos = resIn.atom("CA").getAtomCoord();
+            pos /= totalMass;
+            //pos = resIn.atom("CA").getAtomCoord();
             
+            //#ifdef DEBUG
+            //    std::cout << "Fitting res: " << resIn.getResName() << " " << resIn.getResSeq() << std::endl;
+            //#endif
+            
+            real2 c6_c12 = fittingBead(resIn,beadComponents,pos,totalSasa);
+            
+            //real C6 = c6_c12.x;
+            //real C12 = c6_c12.y;
+            //
+            //real sigma;
+            //real epsilon;
+            //
+            //if(C6 == 0 or C12 == 0){
+            //    sigma = 0;
+            //    epsilon = 0;
+            //} else {
+            //    sigma   = std::cbrt(C12/C6);
+            //    epsilon = real(0.25)*(C6/(sigma*sigma*sigma))*(C6/(sigma*sigma*sigma));
+            //}
+            //std::cout << sigma << " " << epsilon << " "<< totalSasa << std::endl;
+
+            resOut.atom(beadName).setAtomC6(c6_c12.x);
+            resOut.atom(beadName).setAtomC12(c6_c12.y);
+
             ////////////////////////////////////////////////
             
             resOut.atom(beadName).setAtomCoord(pos);

@@ -8,8 +8,8 @@ int main(){
     
     proteinManager::coarseGrainedManager::coarseGrainedGenerator cg;
     
-    cg.loadCGmodel("./coarseGrainedModels/RES2BEAD/aminoAcid2bead_RES2BEAD.map","./coarseGrainedModels/RES2BEAD/bead2atom_RES2BEAD.map");
-    //cg.loadCGmodel("./coarseGrainedModels/MARRINK/aminoAcid2bead_MARRINK.map","./coarseGrainedModels/MARRINK/bead2atom_MARRINK.map");
+    //cg.loadCGmodel("./coarseGrainedModels/RES2BEAD/aminoAcid2bead_RES2BEAD.map","./coarseGrainedModels/RES2BEAD/bead2atom_RES2BEAD.map");
+    cg.loadCGmodel("./coarseGrainedModels/MARRINK/aminoAcid2bead_MARRINK.map","./coarseGrainedModels/MARRINK/bead2atom_MARRINK.map");
     
     ////////////////////////////////////////////
     
@@ -21,11 +21,9 @@ int main(){
     
     ////////////////////////////////////////////
     
-    proteinManager::geometricTransformations::uniformScaling(pdbInput,0.1);
-    
-    ////////////////////////////////////////////
-    
     pdbInput.loadPDB(pdbInputPath);
+    
+    proteinManager::geometricTransformations::uniformScaling(pdbInput,0.1);
     
     proteinManager::ffManager::forceFieldManager ffM;
     
