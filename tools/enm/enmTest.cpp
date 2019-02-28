@@ -10,7 +10,7 @@ int main(){
     pdb.loadPDB("./examples/streptavidin_4jo6_CG.pdb");
     
     
-    proteinManager::enm<proteinManager::enm_models::REACH> enmTest;
+    proteinManager::enm<proteinManager::enm_models::go_dst_diffMol_nm> enmTest;
     
     enmTest.computeENM(pdb);
     

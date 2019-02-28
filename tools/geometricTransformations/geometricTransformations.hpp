@@ -60,10 +60,10 @@ namespace proteinManager{
             
             real3 oldCoord = atm.getAtomCoord();
             
-            Eigen::Vector3<real>  p(oldCoord.x,oldCoord.y,oldCoord.z);
-            Eigen::Vector3<real>  p_new;
-            
-            Eigen::Vector3<real>  centerEigen(center.x,center.y,center.z);
+            Eigen::Vector3f  p(oldCoord.x,oldCoord.y,oldCoord.z);
+            Eigen::Vector3f  p_new;
+                          
+            Eigen::Vector3f  centerEigen(center.x,center.y,center.z);
             p_new = quaternion*(p-centerEigen)+centerEigen;
             
             atm.setAtomCoord({p_new.x(),p_new.y(),p_new.z()});

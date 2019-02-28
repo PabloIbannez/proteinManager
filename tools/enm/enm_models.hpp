@@ -145,120 +145,6 @@ namespace proteinManager{
                 }
             };
             
-            struct caOrellana_nm{
-                
-                real rcut;
-                
-                int M = 3;
-                
-                real Cseq = 6000;
-                real Ccart = 600;
-                
-                int n_seq = 2;
-                int n_cart = 6;
-                
-                const char* info = "# Approaching Elastic Network Models to Molecular Dynamics Flexibility \n"
-                                   "# Laura Orellana, Manuel Rueda, Carles Ferrer-Costa, José Ramón Lopez-Blanco, Pablo Chacón, and Modesto Orozco \n"
-                                   "# Journal of Chemical Theory and Computation 2010 6 (9), 2910-2923 \n"
-                                   "# DOI: 10.1021/ct100208e \n"
-                                   "#\n"
-                                   "#\n"
-                                   "# K units: kcal/(mol·nm^2)\n";
-                
-                bool init(STRUCTURE& str){ 
-                    
-                    int resNum = 0;
-                    
-                    for(MODEL& mdl : str.model()){
-                    for(CHAIN& ch  : mdl.chain()){
-                    for(RESIDUE& res : ch.residue()){
-                        resNum++;
-                        if(res.atom().size() > 1){
-                            std::stringstream ss;
-                            ss << "The current ENM model expects a structure in which "
-                                  "each residue is represented by one atom only.";
-                            throw std::runtime_error(ss.str());
-                        }
-                    }}}
-                    
-                    rcut = (2.9*log(resNum)-2.9)/10.0;
-                    
-                    return true;
-                }
-                
-                bool init(MODEL&     mdl){ 
-                    
-                    int resNum = 0;
-                    
-                    for(CHAIN& ch  : mdl.chain()){
-                    for(RESIDUE& res : ch.residue()){
-                        resNum++;
-                        if(res.atom().size() > 1){
-                            std::stringstream ss;
-                            ss << "The current ENM model expects a structure in which "
-                                  "each residue is represented by one atom only.";
-                            throw std::runtime_error(ss.str());
-                        }
-                    }}
-                    
-                    rcut = 2.9*log(resNum)-2.9;
-                    
-                    return true;
-                }
-                
-                bool init(CHAIN&     ch){ 
-                    
-                    int resNum = 0;
-                    
-                    for(RESIDUE& res : ch.residue()){
-                        resNum++;
-                        if(res.atom().size() > 1){
-                            std::stringstream ss;
-                            ss << "The current ENM model expects a structure in which "
-                                  "each residue is represented by one atom only.";
-                            throw std::runtime_error(ss.str());
-                        }
-                    }
-                    
-                    rcut = 2.9*log(resNum)-2.9;
-                    
-                    return true;
-                }
-                
-                bool init(RESIDUE&     res){ 
-                    
-                    std::stringstream ss;
-                    ss << "The current ENM model cannot build the EN on a residue only.";
-                    throw std::runtime_error(ss.str());
-                    
-                    return true;
-                }
-                
-                bond computeBond(std::shared_ptr<ATOM> atm1, std::shared_ptr<ATOM> atm2){
-                    
-                    real3 r12 = atm1->getAtomCoord()-atm2->getAtomCoord();
-                    real r = sqrt(dot(r12,r12));
-                    
-                    int S12 = abs(atm1->getParentResidue()->getResSeq()-atm2->getParentResidue()->getResSeq());
-                    
-                    std::string chAtm1 = atm1->getParentResidue()->getParentChain()->getChainId();
-                    std::string chAtm2 = atm2->getParentResidue()->getParentChain()->getChainId();
-                    
-                    if(S12 <= M and chAtm1 == chAtm2){
-    
-                        return {atm1,atm2,r,Cseq/(pow(S12,n_seq))};
-                        
-                    } else {
-                        
-                        if(r <= rcut){
-                            return {atm1,atm2,r,pow(Ccart/r,n_cart)};
-                        } else {
-                            return {atm1,atm2,0,0};
-                        }
-                    }
-                }
-            };
-            
             struct REACH_A{
                 
                 real rcut = 18;
@@ -485,6 +371,39 @@ namespace proteinManager{
                         
                         return {atm1,atm2,0,0};
                         
+                    }
+                }
+            };
+            
+            struct go_dst_diffMol_nm{
+                
+                real rcut = 2.5;
+                
+                real e = 40;
+                
+                const char* info = "# e units: kJ, r units: nm\n";
+                
+                bool init(STRUCTURE& str){return true;}
+                bool init(MODEL&     mdl){return true;}
+                bool init(CHAIN&     ch ){return true;}
+                bool init(RESIDUE&   res){return true;}
+                
+                bond computeBond(std::shared_ptr<ATOM> atm1, std::shared_ptr<ATOM> atm2){
+                    
+                    int mol1 = atm1->getModelId();
+                    int mol2 = atm2->getModelId();
+                    
+                    if(mol1 == mol2){
+                        return {atm1,atm2,0,0};
+                    }
+                    
+                    real3 r12 = atm1->getAtomCoord()-atm2->getAtomCoord();
+                    real r = sqrt(dot(r12,r12));
+                    
+                    if(r < rcut){
+                        return {atm1,atm2,r,e};
+                    } else {
+                        return {atm1,atm2,0,0};
                     }
                 }
             };

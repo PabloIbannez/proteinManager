@@ -47,6 +47,7 @@ namespace proteinManager{
                 //Buffer atom vector
                 std::vector<std::shared_ptr<proteinManager::ATOM>> atomVector;
                 
+                
                 for(MODEL&   mdl : strIn.model()){
                 for(CHAIN&   ch  : mdl.chain()  ){
                 for(RESIDUE& res : ch.residue() ){
@@ -56,6 +57,8 @@ namespace proteinManager{
                 
                 for(int i=0; i < atomVector.size(); i++){
                 for(int j=i+1; j < atomVector.size(); j++){
+                    
+                    std::cout << i << " " << j << std::endl;
                     
                     bond bd = ENM->computeBond(atomVector[i],atomVector[j]);
                     
@@ -171,8 +174,8 @@ namespace proteinManager{
         
         for(const bond& bd : enmOut.network){
             
-            os << std::setw(5) << bd.ptr1->getAtomSerial() <<
-                  std::setw(5) << bd.ptr2->getAtomSerial() <<
+            os << std::setw(10) << bd.ptr1->getAtomSerial() <<
+                  std::setw(10) << bd.ptr2->getAtomSerial() <<
                   std::setprecision(6)                     <<
                   std::setw(12) << bd.k                    <<
                   std::setw(12) << bd.r0                   << std::endl;
