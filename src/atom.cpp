@@ -161,7 +161,7 @@ namespace proteinManager {
             os << std::left << std::fixed            <<
             std::setw(6) << "ATOM"                   <<
             std::right                               <<
-            std::setw(5) << a.getAtomSerial()        <<
+            std::setw(5) << ((a.getAtomSerial()>99999)?99999:a.getAtomSerial())        <<
             " "                                   ;
         
             if(a.getAtomName().size() < 4) {

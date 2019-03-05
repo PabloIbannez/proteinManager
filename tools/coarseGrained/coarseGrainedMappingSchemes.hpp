@@ -12,23 +12,42 @@ namespace coarseGrainedMappingSchemes{
         void mappingScheme(RESIDUE& resIn, RESIDUE& resOut, std::string const & beadName,std::vector<std::string>& beadComponents){
             
             ////////////////////////////////////////////////
-
-            real3 pos = {0,0,0};
-            real chg = 0;
-            real totalMass = 0;
             
-            for(std::string const & atom : beadComponents){
-                
-                chg += resIn.atom(atom).getAtomCharge();
-                totalMass += resIn.atom(atom).getAtomMass();
-            }
-            
-            pos = resIn.atom("CA").getAtomCoord();
+            real3 pos = resIn.atom("CA").getAtomCoord();
             
             ////////////////////////////////////////////////
             
             resOut.atom(beadName).setAtomCoord(pos);
-            resOut.atom(beadName).setAtomCharge(chg);
+            
+            //Common properties
+            resOut.atom(beadName).setAtomAltLoc(" ");
+            resOut.atom(beadName).setAtomOccupancy(1);
+            resOut.atom(beadName).setAtomTempFactor(0);
+            resOut.atom(beadName).setAtomElement("");
+        }
+                                    
+    };
+    
+    struct centerOfMass{
+                                    
+        void mappingScheme(RESIDUE& resIn, RESIDUE& resOut, std::string const & beadName,std::vector<std::string>& beadComponents){
+            
+            ////////////////////////////////////////////////
+
+            real3 pos = {0,0,0};
+            real totalMass = 0;
+            
+            for(std::string const & atom : beadComponents){
+                
+                pos       += resIn.atom(atom).getAtomCoord()*resIn.atom(atom).getAtomMass();
+                totalMass += resIn.atom(atom).getAtomMass();
+            }
+            
+            pos = pos/totalMass;
+            
+            ////////////////////////////////////////////////
+            
+            resOut.atom(beadName).setAtomCoord(pos);
             resOut.atom(beadName).setAtomMass(totalMass);
             
             //Common properties

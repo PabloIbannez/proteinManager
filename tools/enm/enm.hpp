@@ -33,6 +33,65 @@ namespace proteinManager{
             std::vector<bond> network;
         
         public:
+        
+            void computeENMbetweenModels(STRUCTURE& strIn){
+                
+                ENM = std::make_shared<enmModel>();
+                
+                if(!ENM->init(strIn)){
+                    std::stringstream ss;
+                    ss << "The current structure is not compatible with the selected elastic network model";
+                    throw std::runtime_error(ss.str());
+                }
+                
+                //Model vector
+                
+                std::vector<int> modelCount;
+                
+                for(MODEL&   mdl : strIn.model()){ 
+                    std::cout << "Adding model: " << mdl.getModelId() << std::endl;
+                    modelCount.push_back(mdl.getModelId());
+                }
+                
+                for(int i = 0;i<modelCount.size();i++){
+                    
+                    std::cout << "Current model i:" << modelCount[i] << std::endl;
+                    
+                    //Buffer atom vector
+                    std::vector<std::shared_ptr<proteinManager::ATOM>> atomVectorMdl_i;
+                    std::vector<std::shared_ptr<proteinManager::ATOM>> atomVectorMdl_j;
+                    
+                    for(CHAIN&   ch  : strIn.model(modelCount[i]).chain()  ){
+                    for(RESIDUE& res : ch.residue() ){
+                    for(ATOM&    atm : res.atom()   ){
+                        atomVectorMdl_i.push_back(std::make_shared<proteinManager::ATOM>(atm));
+                    }}}
+                    
+                    
+                    for(int j = i+1;j<modelCount.size();j++){
+                        
+                        std::cout << " ---- Current model j:" << modelCount[j] << std::endl;
+                        
+                        for(CHAIN&   ch  : strIn.model(modelCount[j]).chain()  ){
+                        for(RESIDUE& res : ch.residue() ){
+                        for(ATOM&    atm : res.atom()   ){
+                            atomVectorMdl_j.push_back(std::make_shared<proteinManager::ATOM>(atm));
+                        }}}
+                        
+                        for(int k=0; k < atomVectorMdl_i.size(); k++){
+                        for(int t=0; t < atomVectorMdl_j.size(); t++){
+                            
+                            bond bd = ENM->computeBond(atomVectorMdl_i[k],atomVectorMdl_j[t]);
+                            
+                            if(bd.k > 0){
+                                network.push_back(bd);
+                            }
+                        }}
+                        
+                    }
+                }
+                
+            }
             
             void computeENM(STRUCTURE& strIn){
                 
@@ -57,8 +116,6 @@ namespace proteinManager{
                 
                 for(int i=0; i < atomVector.size(); i++){
                 for(int j=i+1; j < atomVector.size(); j++){
-                    
-                    std::cout << i << " " << j << std::endl;
                     
                     bond bd = ENM->computeBond(atomVector[i],atomVector[j]);
                     
