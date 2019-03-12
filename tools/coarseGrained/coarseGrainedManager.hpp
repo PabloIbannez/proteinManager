@@ -325,6 +325,125 @@ namespace coarseGrainedManager{
 			}
 		}
 		}
+        
+        template<class mappingSchemeType>
+		void applyCoarseGrainedMap_IgnoreList(proteinManager::STRUCTURE& structIn,proteinManager::STRUCTURE& structOut,proteinManager::STRUCTURE& structIgnored){
+		
+		std::stringstream ss;
+        
+		bool patternMatching;
+		int  atomCount;
+        int  addedAtomCount = 0;
+        
+        bool ignoredResidue = false;
+        
+        mappingSchemeType mSch;
+		
+		for(proteinManager::MODEL& md : structIn.model()) {
+            std::cout << md.getModelId() << std::endl;
+			structOut.addModel(md.getModelId());
+			for(proteinManager::CHAIN& ch : md.chain()) {
+			structOut.model().back().addChain(ch.getChainId());
+			for(proteinManager::RESIDUE& res : ch.residue()) {
+                
+                //std::cout << "current " << res.getModelId() << " " << res.getChainId() << " " << res.getResName() << " " << res.getResSeq() << std::endl;
+                
+                for(RESIDUE& resIgnored : structIgnored.model(md.getModelId()).chain(ch.getChainId()).residue() ){
+                    if(ignoredResidue){ break;}
+                    
+                    //std::cout << std::endl << std::endl << std::endl;
+                    //
+                    //std::cout << res.getModelId() << " " << resIgnored.getModelId() << std::endl <<
+                    //             res.getChainId() << " " << resIgnored.getChainId() << std::endl <<
+                    //             res.getResName() << " " << resIgnored.getResName() << std::endl <<
+                    //             res.getResSeq()  << " " << resIgnored.getResSeq()  << std::endl;
+                                 
+                    //std::cin.get();
+                    
+                    if(res.getModelId() == resIgnored.getModelId() and
+                       res.getChainId() == resIgnored.getChainId() and
+                       res.getResName() == resIgnored.getResName() and
+                       res.getResSeq()  == resIgnored.getResSeq()){
+                           //std::cout << "added " << res.getModelId() << " " << res.getChainId() << " " << res.getResName() << " " << res.getResSeq() << std::endl;
+                           structOut.model(res.getModelId()).chain(res.getChainId()).addResidue(res.getResName(),res.getResSeq(),res.getResInsCode());
+                           proteinManager::RESIDUE& resOut = structOut.model(res.getModelId()).chain(res.getChainId()).residue(res.getResSeq());
+                           for(proteinManager::ATOM& atm : res.atom()) {
+                               resOut.addAtom(atm.getAtomSerial(),atm.getAtomName());
+                               
+                               resOut.atom(atm.getAtomName()).setAtomCoord(atm.getAtomCoord());
+                               resOut.atom(atm.getAtomName()).setAtomCharge(0);
+                               resOut.atom(atm.getAtomName()).setAtomAltLoc(" ");
+                               resOut.atom(atm.getAtomName()).setAtomOccupancy(1);
+                               resOut.atom(atm.getAtomName()).setAtomTempFactor(0);
+                               resOut.atom(atm.getAtomName()).setAtomElement("");
+                               
+                               
+                                //std::cout << "ignored" << std::endl;
+                                //std::cin.get();
+                            }
+                            
+                            ignoredResidue = true;
+                       }
+                }
+				
+                if(!ignoredResidue){
+				    structOut.model(res.getModelId()).chain(res.getChainId()).addResidue(res.getResName(),res.getResSeq(),res.getResInsCode());
+				    proteinManager::RESIDUE& resOut = structOut.model(res.getModelId()).chain(res.getChainId()).residue(res.getResSeq());
+				    
+				    if(aminoAcidTypes.count(res.getResName()) == 0){
+				        ss.clear();
+				        ss << "The amino acid \"" << res.getResName() << "\"  has not been added to the current coarse grained model" << std::endl;
+				        throw std::runtime_error(ss.str());
+				    } else {
+				    
+				        for(auto const& bdCompList : aminoAcidTypes[res.getResName()]->beadComponents){
+				        	
+				        	patternMatching = true;
+				        	atomCount = 0;
+				        	
+				        	//Bead substitution
+				        	//Check if the pattern matchs
+				        	for(std::string const & bd : bdCompList){
+				        		if(patternMatching==false) {break;}
+				        		for(std::string const & atom : beadTypes[bd]->atomComponents){
+				        			if(!res.isAtom(atom)){patternMatching = false; break;}
+				        			atomCount ++;
+				        		}
+				        	}
+				        	if(res.atom().size() != atomCount) {patternMatching = false;}
+				        	
+				        	if(patternMatching){
+				        	
+                                for(std::string const & bd : bdCompList){
+                                    
+                                    resOut.addAtom(addedAtomCount,bd);
+                                    addedAtomCount++;
+                                    
+                                    mSch.mappingScheme(res,resOut,bd,beadTypes[bd]->atomComponents);
+                                    
+                                }
+				        	
+                                break;
+				        	}
+				        }
+				        
+				        if(patternMatching==false){
+				        	ss.clear();
+				        	ss << "All the substitutions are failed for the amino acid \"" << res.getResName() 
+				        	<< "(" << res.getResSeq() << ")" << "\"" << std::endl;
+				        	ss << res << std::endl;
+				        	throw std::runtime_error(ss.str());
+				        }
+				
+				    }
+                }
+                
+                ignoredResidue = false;
+				
+			}
+			}
+		}
+		}
 		
 	};
 
