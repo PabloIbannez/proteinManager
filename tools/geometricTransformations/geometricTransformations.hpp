@@ -97,6 +97,48 @@ namespace proteinManager{
             }
         }
         
+        ////////////////////////////////////////////////////////////////
+        
+        void rotation(ATOM& atm,const real3 center,const real3 axis, const real angle_radians){
+            
+            Eigen::Vector3f  axisEigen(axis.x,axis.y,axis.z);
+            
+            Eigen::Quaternion<real> q;
+            q = Eigen::AngleAxis<real>(angle_radians, axisEigen);
+            
+            rotation(atm,center,q);
+        }
+        
+        void rotation(RESIDUE& res,const real3 center,const real3 axis, const real angle_radians){
+            
+            for(ATOM& atm : res.atom()){
+                rotation(atm,center,axis,angle_radians);
+            }
+        }
+        
+        void rotation(CHAIN& ch,const real3 center,const real3 axis, const real angle_radians){
+            
+            for(RESIDUE& res : ch.residue()){
+                rotation(res,center,axis,angle_radians);
+            }
+        }
+        
+        void rotation(MODEL& mdl,const real3 center,const real3 axis, const real angle_radians){
+            
+            for(CHAIN& ch : mdl.chain()){
+                rotation(ch,center,axis,angle_radians);
+            }
+        }
+        
+        void rotation(STRUCTURE& str,const real3 center,const real3 axis, const real angle_radians){
+            
+            for(MODEL& mdl : str.model()){
+                rotation(mdl,center,axis,angle_radians);
+            }
+        }
+        
+        ////////////////////////////////////////////////////////////////
+        
         template<class entityType>
         void randomRotation(entityType& entity,const real3 center, std::mt19937& gen){
             
