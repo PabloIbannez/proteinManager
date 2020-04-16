@@ -144,6 +144,7 @@ namespace proteinManager {
     
         size_t i;
     
+            
         switch(outputFormat) {
     
         case PDB:
@@ -153,20 +154,23 @@ namespace proteinManager {
             for(i = 0; i < chain.residueVector.size(); i++) {
                 os << chain.residueVector[i] << std::endl;
             }
+            
+            {
+                int serial = chain.residueVector.back().atomVector.back().getAtomSerial()+1;
+                
+                os << std::left << std::fixed <<
+                   std::setw(6) << "TER"   <<
+                   std::right              <<
+                   std::setw(5) << ((serial>99999)?99999:serial)           <<
+                   "      "                <<
+                   std::setw(3) << chain.residueVector[i-1].getResName()   <<
+                   " "                     <<
+                   std::setw(1) << chain.getChainId()  <<
+                   std::setw(4) << chain.residueVector[i-1].getResSeq()    <<
+                   std::setw(1) << chain.residueVector[i-1].getResInsCode()<<
+                   "                                                     " ;
+            }
 
-            int serial = chain.residueVector.back().atomVector.back().getAtomSerial()+1;
-
-            os << std::left << std::fixed <<
-               std::setw(6) << "TER"   <<
-               std::right              <<
-               std::setw(5) << ((serial>99999)?99999:serial)           <<
-               "      "                <<
-               std::setw(3) << chain.residueVector[i-1].getResName()   <<
-               " "                     <<
-               std::setw(1) << chain.getChainId()  <<
-               std::setw(4) << chain.residueVector[i-1].getResSeq()    <<
-               std::setw(1) << chain.residueVector[i-1].getResInsCode()<<
-               "                                                     " ;
             break;
         case SP:
         case SPQ:
