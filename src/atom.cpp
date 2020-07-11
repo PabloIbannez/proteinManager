@@ -58,20 +58,32 @@ namespace proteinManager {
         ATOM(serial,name,nullptr);
     }
     
-    RESIDUE* ATOM::getParentResidue() const {
+    STRUCTURE& ATOM::getParentStructure() const {
+        return this->getParentResidue().getParentStructure();
+    }
+
+    MODEL& ATOM::getParentModel() const {
+        return this->getParentResidue().getParentModel();
+    }
+    
+    CHAIN& ATOM::getParentChain() const {
+        return this->getParentResidue().getParentChain();
+    }
+
+    RESIDUE& ATOM::getParentResidue() const {
         if(parentResidue_ == nullptr) {
             std::stringstream ss;
             ss << "ERROR (RESIDUE). No parent residue has been provided" << std::endl;
             throw std::runtime_error(ss.str());
         } else {
-            return parentResidue_;
+            return *parentResidue_;
         }
     }
     
     ////////////////////////////////////////////////////////////////////
     
     #define GET_MDL_PROPERTY_IMPL_T(type,Name,name)  GET_MDL_PROPERTY_IMPL_R(type,Name,name)
-    #define GET_MDL_PROPERTY_IMPL_R(type,Name,name)  type ATOM::getModel##Name() const{ return this->getParentResidue()->getModel##Name();}
+    #define GET_MDL_PROPERTY_IMPL_R(type,Name,name)  type ATOM::getModel##Name() const{ return this->getParentResidue().getModel##Name();}
     #define GET_MDL_PROPERTY_IMPL(r, data, tuple) GET_MDL_PROPERTY_IMPL_T(PROPTYPE(tuple),PROPNAME_CAPS(tuple),PROPNAME(tuple))
     
         MDL_PROPERTY_LOOP(GET_MDL_PROPERTY_IMPL)
@@ -83,7 +95,7 @@ namespace proteinManager {
     ////////////////////////////////////////////////////////////////////
     
     #define GET_CHAIN_PROPERTY_IMPL_T(type,Name,name)  GET_CHAIN_PROPERTY_IMPL_R(type,Name,name)
-    #define GET_CHAIN_PROPERTY_IMPL_R(type,Name,name)  type ATOM::getChain##Name() const{ return this->getParentResidue()->getChain##Name();}
+    #define GET_CHAIN_PROPERTY_IMPL_R(type,Name,name)  type ATOM::getChain##Name() const{ return this->getParentResidue().getChain##Name();}
     #define GET_CHAIN_PROPERTY_IMPL(r, data, tuple) GET_CHAIN_PROPERTY_IMPL_T(PROPTYPE(tuple),PROPNAME_CAPS(tuple),PROPNAME(tuple))
     
         CHAIN_PROPERTY_LOOP(GET_CHAIN_PROPERTY_IMPL)
@@ -96,7 +108,7 @@ namespace proteinManager {
     
     #define GET_RES_PROPERTY_IMPL_T(type,Name,name)  GET_RES_PROPERTY_IMPL_R(type,Name,name)
     #define GET_RES_PROPERTY_IMPL_R(type,Name,name)  type ATOM::getRes##Name() const{ \
-                                                                                     return this->getParentResidue()->getRes##Name(); \
+                                                                                     return this->getParentResidue().getRes##Name(); \
                                                                                     }
     #define GET_RES_PROPERTY_IMPL(r, data, tuple) GET_RES_PROPERTY_IMPL_T(PROPTYPE(tuple),PROPNAME_CAPS(tuple),PROPNAME(tuple))
     
@@ -152,7 +164,7 @@ namespace proteinManager {
     
     std::ostream& operator<<(std::ostream& os, const ATOM& a) {
         
-        DATA_FORMAT outputFormat = a.getParentResidue()->getParentChain()->getParentModel()->getParentStructure()->outputFormat;
+        DATA_FORMAT outputFormat = a.getParentResidue().getParentChain().getParentModel().getParentStructure().outputFormat;
     
         switch(outputFormat) {
         

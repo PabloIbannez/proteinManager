@@ -34,6 +34,8 @@ namespace proteinManager {
         MODEL* parentModel_;
     
         boost::ptr_vector<RESIDUE> residueVector;
+        
+        boost::ptr_vector<ATOM>    atomVector;
     
       public:
     
@@ -47,10 +49,13 @@ namespace proteinManager {
     
         RESIDUE& residue(int resSeq);
         boost::ptr_vector<RESIDUE>& residue();
+
+        boost::ptr_vector<ATOM>& atom();
         
         bool isRes(int resSeq);
     
-        MODEL* getParentModel() const ;
+        STRUCTURE& getParentStructure() const;
+        MODEL& getParentModel() const ;
         
         ////////////////////////////////////////////////////////////////
     

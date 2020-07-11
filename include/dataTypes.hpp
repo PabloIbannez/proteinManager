@@ -1,12 +1,16 @@
 #ifndef DATA_TYPES_HPP
 #define DATA_TYPES_HPP
+/* Pablo Ibanez Freire, pablo.ibannez@uam.es*/
+
+/* Here the compilation precission is set. The in/out file formats are listed and all
+ * the types used by proteinManager are defined as well as their operators.
+ */
 
 #include <iostream>
 
 namespace proteinManager {
-
-    enum DATA_FORMAT {PDB,PDBQ,PQR,PDRS,SP,SPQ,GRO,XYZ};
     
+    //Uncomment the next line and recompile to use the double precision.
     //#define DOUBLE_PRECISION
     
     #ifdef DOUBLE_PRECISION
@@ -15,6 +19,10 @@ namespace proteinManager {
     typedef float real;
     #endif
     
+    //in/out admitted file formats
+    enum DATA_FORMAT {PDB,PDBQ,PQR,PDRS,SP,SPQ,GRO,XYZ};
+    
+    //Flag to enable data CUDA compatibility if nvcc is used as compiler
     #ifdef __CUDACC__
         #define CUDA_TOKENS __host__ __device__
     #else

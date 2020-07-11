@@ -34,6 +34,9 @@ class MODEL {
     STRUCTURE* parentStructure_;
 
     boost::ptr_vector<CHAIN> chainVector;
+    
+    boost::ptr_vector<RESIDUE>  residueVector;
+    boost::ptr_vector<ATOM>     atomVector;
 
   public:
 
@@ -47,10 +50,13 @@ class MODEL {
 
     CHAIN& chain(std::string chainID);
     boost::ptr_vector<CHAIN>& chain();
+
+    boost::ptr_vector<ATOM>&    atom();
+    boost::ptr_vector<RESIDUE>& residue();
     
     bool isChain(std::string chainID);
 
-    STRUCTURE* getParentStructure() const;
+    STRUCTURE& getParentStructure() const;
     
     ////////////////////////////////////////////////////////////////////
     

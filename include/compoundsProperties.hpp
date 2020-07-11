@@ -1,6 +1,21 @@
 #ifndef COMPOUNDS_PROPERTIES
 #define COMPOUNDS_PROPERTIES
 
+/* Pablo Ibanez Freire, pablo.ibannez@uam.es*/
+
+/* Definitions of the properties of each entity. 
+ * New ones can be added without any kind of penalty, in case they are not used they will not consume memory. 
+ * To add a new property to an entjty it is enough to write the line (PropertyName,propertyName,propertyDataType), (Note the change from upper case to lower case between the first and second components of the tuple).
+ * Certain properties are necessary for the correct functioning of the library:
+ *
+ * Model:Id
+ * Chain:Id
+ * Residue:Name,Seq,InsCode
+ * Atom:Serial,Name
+ *
+ * These properties cannot be removed.
+ */
+
 #include "proteinManager.hpp"
 
 #include <boost/preprocessor.hpp>
@@ -10,14 +25,18 @@
 
 namespace proteinManager {
 
+//Model properties
 #define MDL_PROPERTIES_LIST   ((Id    , id    ,int        ))
 
+//Chain properties
 #define CHAIN_PROPERTIES_LIST ((Id    , id    ,std::string))
 
+//Residue properties
 #define RES_PROPERTIES_LIST   ((Name       , name       ,std::string)) \
                               ((Seq        , seq        ,int        )) \
                               ((InsCode    , iCode      ,std::string))
 
+//Atom properties
 #define ATOM_PROPERTIES_LIST  ((Serial     , serial     ,int        )) \
                               ((Name       , name       ,std::string)) \
                               ((AltLoc     , altLoc     ,std::string)) \

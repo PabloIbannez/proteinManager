@@ -31,6 +31,39 @@ namespace proteinManager {
         return modelVector;
     }
     
+    boost::ptr_vector<CHAIN>& STRUCTURE::chain(){
+
+        chainVector.clear();
+
+        for(MODEL& mdl : modelVector){
+            chainVector.insert(chainVector.end(),mdl.chain().begin(),mdl.chain().end());
+        }
+
+        return chainVector;
+    }
+    
+    boost::ptr_vector<RESIDUE>& STRUCTURE::residue(){
+
+        residueVector.clear();
+
+        for(MODEL& mdl : modelVector){
+            residueVector.insert(residueVector.end(),mdl.residue().begin(),mdl.residue().end());
+        }
+
+        return residueVector;
+    }
+    
+    boost::ptr_vector<ATOM>& STRUCTURE::atom(){
+
+        atomVector.clear();
+
+        for(MODEL& mdl : modelVector){
+            atomVector.insert(atomVector.end(),mdl.atom().begin(),mdl.atom().end());
+        }
+
+        return atomVector;
+    }
+    
     bool STRUCTURE::isModel(int modelID){
         
         for(MODEL& mdl : modelVector){

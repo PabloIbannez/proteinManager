@@ -29,6 +29,28 @@ namespace proteinManager {
         return chainVector;
     }
     
+    boost::ptr_vector<RESIDUE>& MODEL::residue(){
+
+        residueVector.clear();
+
+        for(CHAIN& ch : chainVector){
+            residueVector.insert(residueVector.end(),ch.residue().begin(),ch.residue().end());
+        }
+
+        return residueVector;
+    }
+    
+    boost::ptr_vector<ATOM>& MODEL::atom(){
+
+        atomVector.clear();
+
+        for(CHAIN& ch : chainVector){
+            atomVector.insert(atomVector.end(),ch.atom().begin(),ch.atom().end());
+        }
+
+        return atomVector;
+    }
+    
     bool MODEL::isChain(std::string chainID){
         
         for(CHAIN& ch : chainVector){
@@ -40,13 +62,13 @@ namespace proteinManager {
         return false;
     }
     
-    STRUCTURE* MODEL::getParentStructure() const {
+    STRUCTURE& MODEL::getParentStructure() const {
         if(parentStructure_ == nullptr) {
             std::stringstream ss;
             ss << "ERROR (MODEL). No parent structure has been provided";
             throw std::runtime_error(ss.str());
         } else {
-            return parentStructure_;
+            return *parentStructure_;
         }
     }
     
@@ -130,7 +152,7 @@ namespace proteinManager {
     
     std::ostream& operator<<(std::ostream& os, const MODEL& md) {
     
-        DATA_FORMAT outputFormat = md.getParentStructure()->outputFormat;
+        DATA_FORMAT outputFormat = md.getParentStructure().outputFormat;
     
         switch(outputFormat) {
     

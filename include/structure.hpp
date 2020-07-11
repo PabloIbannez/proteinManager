@@ -59,7 +59,11 @@ namespace proteinManager {
         bool overwrite_ResSeq = false;
         
         //Vector where references to models of the structure are stored.
-        boost::ptr_vector<MODEL> modelVector;
+        boost::ptr_vector<MODEL>   modelVector;
+        
+        boost::ptr_vector<CHAIN>   chainVector;
+        boost::ptr_vector<RESIDUE> residueVector;
+        boost::ptr_vector<ATOM>    atomVector;
     
     public:
     
@@ -75,7 +79,11 @@ namespace proteinManager {
         
         //Acces to models
         MODEL& model(int modelID);
+
         boost::ptr_vector<MODEL>& model();
+        boost::ptr_vector<CHAIN>&   chain();
+        boost::ptr_vector<RESIDUE>& residue();
+        boost::ptr_vector<ATOM>&    atom();
         
         bool isModel(int modelID);
         

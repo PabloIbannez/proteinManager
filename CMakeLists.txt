@@ -5,7 +5,7 @@ project(proteinManager)
 # Find source and headers files
 file(GLOB SOURCES src/*.cpp)
 file(GLOB HEADERS include/*.hpp)
-file(GLOB TOOLS tools/*/*.hpp)
+#file(GLOB TOOLS tools/*/*.hpp)
 
 # Check libraries
 find_package(Boost REQUIRED)
@@ -24,4 +24,4 @@ install(TARGETS ${PROJECT_NAME} DESTINATION /usr/lib)
 
 # Install library headers
 install(FILES ${HEADERS} DESTINATION include/${PROJECT_NAME})
-install(FILES ${TOOLS}   DESTINATION include/${PROJECT_NAME}/tools)
+#install(FILES ${TOOLS}   DESTINATION include/${PROJECT_NAME}/tools)

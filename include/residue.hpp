@@ -51,7 +51,9 @@ class RESIDUE {
     
     bool isAtom(std::string atomName);
     
-    CHAIN* getParentChain() const ;
+    STRUCTURE& getParentStructure() const;
+    MODEL& getParentModel() const ;
+    CHAIN& getParentChain() const ;
     
     ////////////////////////////////////////////////////////////////////
 

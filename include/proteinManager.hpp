@@ -1,6 +1,9 @@
 #ifndef proteinManager_HPP
 #define proteinManager_HPP
 
+/* Pablo Ibanez Freire, pablo.ibannez@uam.es*/
+
+/*Main library file*/
 
 #include <iostream>
 #include <iomanip>

@@ -31,6 +31,17 @@ namespace proteinManager {
         return residueVector;
     }
     
+    boost::ptr_vector<ATOM>& CHAIN::atom(){
+        
+        atomVector.clear();
+
+        for(RESIDUE& res : residueVector){
+            atomVector.insert(atomVector.end(),res.atom().begin(),res.atom().end());
+        }
+
+        return atomVector;
+    }
+    
     bool CHAIN::isRes(int resSeq){
         
         for(RESIDUE& res : residueVector){
@@ -42,20 +53,24 @@ namespace proteinManager {
         return false;
     }
     
-    MODEL* CHAIN::getParentModel() const {
+    STRUCTURE& CHAIN::getParentStructure() const {
+        return this->getParentModel().getParentStructure();    
+    }
+    
+    MODEL& CHAIN::getParentModel() const {
         if(parentModel_ == nullptr) {
             std::stringstream ss;
             ss << "ERROR (CHAIN). No parent model has been provided" ;
             throw std::runtime_error(ss.str());
         } else {
-            return parentModel_;
+            return *parentModel_;
         }
     }
     
     ////////////////////////////////////////////////////////////////////
     
     #define GET_MDL_PROPERTY_IMPL_T(type,Name,name)  GET_MDL_PROPERTY_IMPL_R(type,Name,name)
-    #define GET_MDL_PROPERTY_IMPL_R(type,Name,name)  type CHAIN::getModel##Name() const{ return this->getParentModel()->getModel##Name();}
+    #define GET_MDL_PROPERTY_IMPL_R(type,Name,name)  type CHAIN::getModel##Name() const{ return this->getParentModel().getModel##Name();}
     #define GET_MDL_PROPERTY_IMPL(r, data, tuple) GET_MDL_PROPERTY_IMPL_T(PROPTYPE(tuple),PROPNAME_CAPS(tuple),PROPNAME(tuple))
     
     MDL_PROPERTY_LOOP(GET_MDL_PROPERTY_IMPL)
@@ -136,7 +151,7 @@ namespace proteinManager {
     
     std::ostream& operator<<(std::ostream& os, const CHAIN& chain) {
     
-        DATA_FORMAT outputFormat = chain.getParentModel()->getParentStructure()->outputFormat;
+        DATA_FORMAT outputFormat = chain.getParentModel().getParentStructure().outputFormat;
     
         if(chain.residueVector.size() ==0 ) {
             return os;

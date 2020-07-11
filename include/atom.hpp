@@ -41,7 +41,10 @@ namespace proteinManager {
             std::cerr << "Calling atom destructor" << std::endl;
         }*/
         
-        RESIDUE* getParentResidue() const;
+        STRUCTURE& getParentStructure() const;
+        MODEL& getParentModel() const ;
+        CHAIN& getParentChain() const ;
+        RESIDUE& getParentResidue() const;
         
         ////////////////////////////////////////////////////////////////////
         
