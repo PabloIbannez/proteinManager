@@ -7,6 +7,48 @@ namespace proteinManager{
     
     namespace geometricTransformations{
         
+        void translation(ATOM& atm,real3 translationVector){
+            
+            real3 oldCoord = atm.getAtomCoord();
+            real3 newCoord;
+            
+            newCoord.x = oldCoord.x + translationVector.x;
+            newCoord.y = oldCoord.y + translationVector.y;
+            newCoord.z = oldCoord.z + translationVector.z;
+            
+            atm.setAtomCoord(newCoord);
+        }
+        
+        void translation(RESIDUE& res,real3 translationVector){
+            
+            for(ATOM& atm : res.atom()){
+                translation(atm,translationVector);
+            }
+        }
+        
+        void translation(CHAIN& ch,real3 translationVector){
+            
+            for(RESIDUE& res : ch.residue()){
+                translation(res,translationVector);
+            }
+        }
+        
+        void translation(MODEL& mdl,real3 translationVector){
+            
+            for(CHAIN& ch : mdl.chain()){
+                translation(ch,translationVector);
+            }
+        }
+        
+        void translation(STRUCTURE& str,real3 translationVector){
+            
+            for(MODEL& mdl : str.model()){
+                translation(mdl,translationVector);
+            }
+        }
+        
+        ////////////////////////////////////////////////////////////////
+        
         void homotheticTransformation(ATOM& atm,real3 center,real ratio){
             
             real3 oldCoord = atm.getAtomCoord();

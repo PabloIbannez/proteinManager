@@ -167,7 +167,7 @@ namespace proteinManager {
             if(line.compare(0,6,"ENDMDL") == 0) {
                 modelEnded = true;
                 std::cerr << "Loading of model \"" << modelVector.size()
-                        << "\" complete" << std::endl;
+                        << "\" completed" << std::endl;
             }
     
             if(line.compare(0,3,"TER") == 0) {
@@ -514,7 +514,7 @@ namespace proteinManager {
                 }
     
                 std::cerr << "Loading of model \"" << modelVector.size()
-                        << "\" complete" << std::endl;
+                        << "\" completed" << std::endl;
                 continue;
             }
     

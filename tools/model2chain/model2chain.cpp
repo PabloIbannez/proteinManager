@@ -8,6 +8,7 @@ int main(int argc, char *argv[]){
                                           "0","1","2","3","4","5","6","7","8","9"};
     
     pdbIn.loadPDB(argv[1]);
+    //pdbIn.setOutputFormat(proteinManager::DATA_FORMAT::PDB);
     
     int chainCount = -1;
     int resCount;

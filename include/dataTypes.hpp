@@ -54,6 +54,7 @@ namespace proteinManager {
     CUDA_TOKENS real3 operator -(const real3 &a, const real  &b);
     CUDA_TOKENS real3 operator /(const real3 &a, const real &b);
     CUDA_TOKENS real3 operator *(const real3 &a, const real &b);
+    CUDA_TOKENS real3 operator *(const real  &a, const real3 &b);
     CUDA_TOKENS void operator +=( real3 &a, const real3 &b);
     CUDA_TOKENS void operator /=( real3 &a, const real &b);
     

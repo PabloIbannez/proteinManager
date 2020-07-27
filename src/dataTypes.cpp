@@ -50,6 +50,14 @@ namespace proteinManager {
         return r;
     }
     
+    CUDA_TOKENS real3 operator *(const real &a, const real3 &b) {
+        real3 r;
+        r.x = a * b.x;
+        r.y = a * b.y;
+        r.z = a * b.z;
+        return r;
+    }
+    
     CUDA_TOKENS void operator +=( real3 &a, const real3 &b) {
         a.x = a.x + b.x;
         a.y = a.y + b.y;
