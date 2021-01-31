@@ -58,7 +58,8 @@ namespace proteinManager {
     CUDA_TOKENS void operator +=( real3 &a, const real3 &b);
     CUDA_TOKENS void operator /=( real3 &a, const real &b);
     
-    CUDA_TOKENS real dot(const real3 &a,const real3 &b);
+    CUDA_TOKENS real  dot(const real3 &a,const real3 &b);
+    CUDA_TOKENS real3 cross(const real3 &a,const real3 &b);
     
     std::ostream& operator<<(std::ostream& os, const real3& r);
     

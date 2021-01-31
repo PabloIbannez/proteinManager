@@ -217,10 +217,25 @@ namespace proteinManager {
                                             real(std::stod(line.substr(38,8))),
                                             real(std::stod(line.substr(46,8)))
                                             };
-                            occupancy  =     real(std::stod(line.substr(54,6)));
-                            tempFactor =     real(std::stod(line.substr(60,6)));
-                            element    =                    line.substr(76,2);
-        
+
+                            try {
+                                occupancy  =     real(std::stod(line.substr(54,6)));
+                            } catch (std::invalid_argument) {
+                                occupancy =   1.0;
+                            }
+                            
+                            try {
+                                tempFactor =     real(std::stod(line.substr(60,6)));
+                            } catch (std::invalid_argument) {
+                                tempFactor =   0;
+                            }
+                            
+                            try {
+                                element    =                    line.substr(76,2);
+                            } catch (std::invalid_argument) {
+                                element =   "";
+                            }
+                            
                             try {
                                 charge =                   (line.substr(78,2).empty())?0:real(std::stod(line.substr(78,2)));
                             } catch (std::invalid_argument) {

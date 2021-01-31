@@ -1,0 +1,17 @@
+CLUSTAL W (1.81) multiple sequence alignment
+
+2y0g_clean.pdb      --KGEELFTGVVPILVELDGDVNGHKFSVSGEGEGDATYGKLTLKFICTTGKLPVPWPTL
+gfp.pdb             ASKGEELFTGVVPILVELDGDVNGHKFSVSGEGEGDATYGKLTLKFICTTGKLPVPWPTL
+                      **********************************************************
+
+2y0g_clean.pdb      VTTL---VQCFSRYPDHMKQHDFFKSAMPEGYVQERTIFFKDDGNYKTRAEVKFEGDTLV
+gfp.pdb             VTTFSYGVQCFSRYPDHMKRHDFFKSAMPEGYVQERTIFFKDDGNYKTRAEVKFEGDTLV
+                    ***:   ************.****************************************
+
+2y0g_clean.pdb      NRIELKGIDFKEDGNILGHKLEYNYNSHNVYIMADKQKNGIKVNFKIRHNIEDGSVQLAD
+gfp.pdb             NRIELKGIDFKEDGNILGHKLEYNYNSHNVYIMADKQKNGIKVNFKIRHNIEDGSVQLAD
+                    ************************************************************
+
+2y0g_clean.pdb      HYQQNTPIGDGPVLLPDNHYLSTQSALSKDPNEKRDHMVLLEFVTAAGIT
+gfp.pdb             HYQQNTPIGDGPVLLPDNHYLSTQSALSKDPNEKRDHMVLLEFVTAAGIT
+                    **************************************************

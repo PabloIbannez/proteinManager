@@ -1,4 +1,3 @@
-
 # Ignore all
 *
 
@@ -13,4 +12,29 @@ build/
 *.o
 *.out
 *.top
-
+*.Qdetails
+*.Qlist
+*.angle
+*.bond
+*.dihe
+*.excl
+*.iRad
+*.sp
+*.pdb
+*.pdbBack
+*.coord
+*.cargo
+*.coord
+*.nc
+*.pdbback
+*.struct
+*.map
+*.nxs
+*.xyz
+*.png
+*.itp
+*.param
+*.pdb
+*.pdrs
+*.topBack
+*.pairs

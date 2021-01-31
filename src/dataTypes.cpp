@@ -74,6 +74,10 @@ namespace proteinManager {
         return a.x*b.x + a.y*b.y + a.z*b.z;
     }
     
+    CUDA_TOKENS real3 cross(const real3 &a,const real3 &b) {
+        return {a.y*b.z - a.z*b.y, (-a.x*b.z + a.z*b.x), a.x*b.y - a.y*b.x};
+    }
+    
     std::ostream& operator<<(std::ostream& os, const real3& r) {
         os << r.x << " " << r.y << " " << r.z;
         return os;

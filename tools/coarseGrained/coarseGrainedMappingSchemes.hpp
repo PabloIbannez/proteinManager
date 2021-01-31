@@ -1,6 +1,7 @@
 #ifndef COARSE_GRAINED_MAPPING_SCHEMES_HPP
 #define COARSE_GRAINED_MAPPING_SCHEMES_HPP
 
+#include <proteinManager/proteinManager.hpp>
 #include <random>
 
 namespace proteinManager{
@@ -19,6 +20,34 @@ namespace coarseGrainedMappingSchemes{
             
             resOut.atom(beadName).setAtomCoord(pos);
             
+            //Common properties
+            resOut.atom(beadName).setAtomAltLoc(" ");
+            resOut.atom(beadName).setAtomOccupancy(1);
+            resOut.atom(beadName).setAtomTempFactor(0);
+            resOut.atom(beadName).setAtomElement("");
+        }
+                                    
+    };
+
+    struct ca_sasa{
+                                    
+        void mappingScheme(RESIDUE& resIn, RESIDUE& resOut, std::string const & beadName,std::vector<std::string>& beadComponents){
+            
+            ////////////////////////////////////////////////
+            
+            real3 pos = resIn.atom("CA").getAtomCoord();
+            
+            ////////////////////////////////////////////////
+            
+            resOut.atom(beadName).setAtomCoord(pos);
+            
+            real SASA = 0;
+            for(ATOM& atm : resIn.atom()){
+                SASA+=atm.getAtomSASA();
+            }
+    
+            resOut.atom(beadName).setAtomSASA(SASA);
+    
             //Common properties
             resOut.atom(beadName).setAtomAltLoc(" ");
             resOut.atom(beadName).setAtomOccupancy(1);

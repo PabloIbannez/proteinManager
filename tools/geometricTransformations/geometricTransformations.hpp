@@ -1,3 +1,6 @@
+#ifndef __GEOMETRIC__TRANSFORMATIONS__
+#define __GEOMETRIC__TRANSFORMATIONS__
+
 #include <proteinManager/proteinManager.hpp>
 
 #include <eigen3/Eigen/Eigen>
@@ -196,10 +199,10 @@ namespace proteinManager{
             real theta1 = real(M_PI)*distr(gen);
             real theta2 = real(M_PI)*distr(gen);
             
-            //x = sin(θ1) ∗σ1;
-            //y = cos(θ1) ∗σ1;
-            //z = sin(θ2) ∗σ2;
-            //w = cos(θ2) ∗σ2;
+            //x = sin(θ1)*σ1;
+            //y = cos(θ1)*σ1;
+            //z = sin(θ2)*σ2;
+            //w = cos(θ2)*σ2;
             
             Eigen::Quaternion<real> randomQuaternion(std::sin(theta1)*sigma1,
                                                      std::cos(theta1)*sigma1,
@@ -210,7 +213,28 @@ namespace proteinManager{
         }
         
         ////////////////////////////////////////////////////////////////
+        
+        template<class entityType>
+        void randomRotation(entityType& entity,const real3 center,const real angle, std::mt19937& gen){
+            
+            std::uniform_real_distribution<real> distr(0.0,1.0);
+
+            Eigen::Matrix<real,3,1> rndAxis;
+
+            real theta = real(2.0)*M_PI*distr(gen);
+            real phi   = acos(real(1.0)-real(2.0)*distr(gen));
+
+            rndAxis(0) = sin(phi)*cos(theta);
+            rndAxis(1) = sin(phi)*sin(theta);
+            rndAxis(2) = cos(phi);
+            
+            Eigen::Quaternion<real> q(Eigen::AngleAxis<real>(angle,rndAxis));
+            
+            rotation(entity,center,q);
+        }
     }
     
     
 }
+
+#endif

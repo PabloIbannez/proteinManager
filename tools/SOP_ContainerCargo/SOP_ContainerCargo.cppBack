@@ -1,0 +1,750 @@
+#include <proteinManager/proteinManager.hpp>
+
+#include "../../tools/coarseGrained/coarseGrainedManager.hpp"
+#include "../../tools/coarseGrained/coarseGrainedMappingSchemes.hpp"
+
+#include "../../tools/geometricTransformations/geometricTransformations.hpp"
+#include "../../tools/centers/centroid.hpp"
+
+#define cutOff 8.0 //angstrom
+
+#define K 20 //~ 14 N/m
+
+#define eIntraContainer 1.28
+#define eInterContainer 1.05
+
+#define eIntraCargo 1.28
+#define eInterCargo 1.05
+
+using namespace proteinManager;
+
+real beadCharge(std::string const & beadName){
+
+    if(beadName.substr(0,3) == "LYS" or beadName.substr(0,3) == "ARG"){
+        return 1.0;
+    }
+    
+    if(beadName.substr(0,3) == "ASP" or beadName.substr(0,3) == "GLU"){
+        return -1.0;
+    }
+    
+    if(beadName.substr(0,3) == "HIS" or beadName.substr(0,3) == "HID" or beadName.substr(0,3) == "HIE" or beadName.substr(0,3) == "HIP" ){
+        return 0.5;
+    }
+
+    return 0.0;
+}
+
+void toHIS(RESIDUE& res){
+    if(res.getResName().substr(0,3) == "HID" or res.getResName().substr(0,3) == "HIE" or res.getResName().substr(0,3) == "HIP" ){
+        res.setResName("HIS");
+    }
+}
+
+void toCYS(RESIDUE& res){
+    if(res.getResName().substr(0,3) == "CYX"){
+        res.setResName("CYS");
+    }
+}
+
+struct CA{
+                                
+    void mappingScheme(RESIDUE& resIn, RESIDUE& resOut, std::string const & beadName,std::vector<std::string>& beadComponents){
+        
+        ////////////////////////////////////////////////
+        
+        real3 pos = resIn.atom("CA").getAtomCoord();
+        
+        ////////////////////////////////////////////////
+        
+        resOut.atom(beadName).setAtomCoord(pos);
+        resOut.atom(beadName).setAtomCharge(beadCharge(beadName));
+
+        //Common properties
+        resOut.atom(beadName).setAtomAltLoc(" ");
+        resOut.atom(beadName).setAtomOccupancy(1);
+        resOut.atom(beadName).setAtomTempFactor(0);
+        resOut.atom(beadName).setAtomElement("");
+    }
+                                
+};
+
+struct CA_SASA{
+                                
+    void mappingScheme(RESIDUE& resIn, RESIDUE& resOut, std::string const & beadName,std::vector<std::string>& beadComponents){
+        
+        ////////////////////////////////////////////////
+        
+        real3 pos = resIn.atom("CA").getAtomCoord();
+        
+        ////////////////////////////////////////////////
+        
+        resOut.atom(beadName).setAtomCoord(pos);
+        resOut.atom(beadName).setAtomCharge(beadCharge(beadName));
+        
+        real SASA = 0;
+        for(ATOM& atm : resIn.atom()){
+            SASA+=atm.getAtomSASA();
+        }
+
+        resOut.atom(beadName).setAtomSASA(SASA);
+
+        //Common properties
+        resOut.atom(beadName).setAtomAltLoc(" ");
+        resOut.atom(beadName).setAtomOccupancy(1);
+        resOut.atom(beadName).setAtomTempFactor(0);
+        resOut.atom(beadName).setAtomElement("");
+    }
+                                
+};
+
+real atomsDst(ATOM& atmi,ATOM& atmj){
+    real3 dr = atmj.getAtomCoord()-atmi.getAtomCoord();
+    return sqrt(dot(dr,dr));
+}
+
+RESIDUE& getAllAtomResidue(STRUCTURE& structAllAtom,ATOM& bead){
+    return structAllAtom.model(bead.getModelId()).chain(bead.getChainId()).residue(bead.getResSeq());
+}
+
+bool isFirstChainResidue(RESIDUE& res){
+    return res.getParentChain().residue()[0].getResSeq()==res.getResSeq();
+}
+
+bool isLastChainResidue(RESIDUE& res){
+    return res.getParentChain().residue().back().getResSeq()==res.getResSeq();
+}
+
+
+template<class atomVector>
+std::vector<std::vector<int>> generateNeighbourList(atomVector& atmV,real rCut){
+
+    std::vector<std::vector<int>> neigList(atmV.size());
+    
+    //std::cerr << "Generating neighbour list (parallel) ..." << std::endl;
+    #pragma omp parallel for schedule(dynamic)
+    for(uint i = 0  ;i<atmV.size();i++){
+    if(omp_get_thread_num()==0){
+        std::cerr << "\r" << "Generating neighbour list (parallel) " << i+1 << "/" << atmV.size()  << " (number of threads: " << omp_get_num_threads() << ")"<<std::flush;
+    }
+    for(uint j = i+1;j<atmV.size();j++){
+        if(atomsDst(atmV[i],atmV[j])<cutOff){
+            neigList[i].push_back(j);
+        }
+    }}
+    std::cerr << "\r\e[K" << "Generating neighbour list " << atmV.size() << "/" << atmV.size() << std::endl;
+
+    return neigList;
+}
+
+struct bond{
+    int i,j;
+    real r0;
+};
+
+struct nativeContact{
+    int iMol,jMol;
+    std::string chi,chj;
+    int resi,resj;
+    int iSerial,jSerial;
+    real r0;
+    real e;
+};
+
+int main(int argc, char *argv[]){
+    
+    STRUCTURE containerIn;
+    STRUCTURE cargoIn;
+    STRUCTURE containerOut;
+    STRUCTURE cargoOut;
+    
+    std::string inputContainerFileName  = argv[1];
+    std::string inputCargoFileName      = argv[2];
+    std::string outputFileName          = argv[3];
+
+    containerIn.loadPDB(inputContainerFileName);
+    containerIn.renumber();
+    
+    cargoIn.loadPDB(inputCargoFileName);
+    cargoIn.renumber();
+
+    ////////////////////////////////////////////////
+    
+    //geometricTransformations::uniformScaling(proteinIn,0.1);
+
+    real3 centroid = computeCentroid(containerIn);
+
+    geometricTransformations::translation(containerIn,real(-1.0)*centroid);
+    geometricTransformations::translation(cargoIn,real(-1.0)*centroid);
+    
+    //geometricTransformations::rotation(proteinIn,centroid,{1,0,0},34.0*(M_PI/180.0));
+    //geometricTransformations::rotation(proteinIn,centroid,{0,1,0},13.0*(M_PI/180.0));
+    
+    ////////////////////////////////////////////////
+    
+    std::cerr << "Generating CG model" << std::endl;
+
+    for(MODEL&   mdl : containerIn.model()){
+        //std::cerr << "Model " << mdl.getModelId() << std::endl;
+        containerOut.addModel(mdl.getModelId());
+    for(CHAIN&   ch  : mdl.chain()       ){
+        containerOut.model(mdl.getModelId()).addChain(ch.getChainId());
+    for(RESIDUE& res : ch.residue()      ){
+        containerOut.model(mdl.getModelId()).chain(ch.getChainId()).addResidue(res.getResName(),res.getResSeq(),res.getResInsCode());
+    for(ATOM&   atm : res.atom()         ){
+
+        if(atm.getAtomName() == "CA"){
+            containerOut.model(mdl.getModelId()).chain(ch.getChainId()).residue(res.getResSeq()).addAtom(atm.getAtomSerial(),atm.getAtomName());
+            containerOut.model(mdl.getModelId()).chain(ch.getChainId()).residue(res.getResSeq()).atom(atm.getAtomName()).setAtomCoord(atm.getAtomCoord());
+
+            real sasa=0;
+            for(ATOM&   atmSasa : res.atom()         ){
+                sasa+=atmSasa.getAtomSASA();
+            }
+            
+            containerOut.model(mdl.getModelId()).chain(ch.getChainId()).residue(res.getResSeq()).atom(atm.getAtomName()).setAtomSASA(sasa);
+
+        }
+
+    }}}}
+    
+    containerOut.renumber();
+    
+    for(MODEL&   mdl : containerOut.model()){
+    for(CHAIN&   ch  : mdl.chain()       ){
+    for(RESIDUE& res : ch.residue()      ){
+        toHIS(res);
+        toCYS(res);
+    }}}
+    
+    for(MODEL&   mdl : containerOut.model()){
+    for(CHAIN&   ch  : mdl.chain()       ){
+    for(RESIDUE& res : ch.residue()      ){
+    for(ATOM&   atm : res.atom()         ){
+        atm.setAtomName(atm.getResName());
+    }}}}
+    
+    std::cerr << "Generating CG model cargo" << std::endl;
+
+    //
+    
+    for(MODEL&   mdl : cargoIn.model()){
+        //std::cerr << "Model " << mdl.getModelId() << std::endl;
+        cargoOut.addModel(mdl.getModelId());
+    for(CHAIN&   ch  : mdl.chain()       ){
+        cargoOut.model(mdl.getModelId()).addChain(ch.getChainId());
+    for(RESIDUE& res : ch.residue()      ){
+        cargoOut.model(mdl.getModelId()).chain(ch.getChainId()).addResidue(res.getResName(),res.getResSeq(),res.getResInsCode());
+    for(ATOM&   atm : res.atom()         ){
+        
+        if(atm.getAtomName() == "CA"){
+            cargoOut.model(mdl.getModelId()).chain(ch.getChainId()).residue(res.getResSeq()).addAtom(atm.getAtomSerial(),atm.getAtomName());
+            cargoOut.model(mdl.getModelId()).chain(ch.getChainId()).residue(res.getResSeq()).atom(atm.getAtomName()).setAtomCoord(atm.getAtomCoord());
+        
+            real sasa=0;
+            for(ATOM&   atmSasa : res.atom()         ){
+                sasa+=atmSasa.getAtomSASA();
+            }
+
+            cargoOut.model(mdl.getModelId()).chain(ch.getChainId()).residue(res.getResSeq()).atom(atm.getAtomName()).setAtomSASA(sasa);
+        }
+            
+
+    }}}}
+    
+    cargoOut.renumber();
+    std::cerr << "Generating CG model cargo finished" << std::endl;
+    
+    for(MODEL&   mdl : cargoOut.model()){
+    for(CHAIN&   ch  : mdl.chain()       ){
+    for(RESIDUE& res : ch.residue()      ){
+        toHIS(res);
+        toCYS(res);
+    }}}
+    
+    for(MODEL&   mdl : cargoOut.model()){
+    for(CHAIN&   ch  : mdl.chain()       ){
+    for(RESIDUE& res : ch.residue()      ){
+    for(ATOM&   atm : res.atom()         ){
+        atm.setAtomName(atm.getResName());
+    }}}}
+
+    //
+    
+    int serialOffset;
+
+    for(MODEL&   mdl : containerOut.model()){
+    for(CHAIN&   ch  : mdl.chain()       ){
+    for(RESIDUE& res : ch.residue()      ){
+    for(ATOM&   atm : res.atom()         ){
+        serialOffset = atm.getAtomSerial();
+    }}}}
+    
+    for(MODEL&   mdl : cargoOut.model() ){
+    for(CHAIN&   ch  : mdl.chain()      ){
+    for(RESIDUE& res : ch.residue()     ){
+    for(ATOM&   atm : res.atom()        ){
+        atm.setAtomSerial(serialOffset+atm.getAtomSerial()+1);
+    }}}}
+
+    ////////////////////////////////////////////////
+    
+    std::cerr << "Generating bonds" << std::endl;
+
+    std::vector<bond> bondVector;
+    
+    for(MODEL&   mdl : containerOut.model()){
+    for(CHAIN&   ch  : mdl.chain()  ){
+    for(uint i=0 ; i<ch.residue().size()-1 ; i++ ){
+        
+        real3 r1 = ch.residue()[i  ].atom()[0].getAtomCoord();
+        real3 r2 = ch.residue()[i+1].atom()[0].getAtomCoord();
+        
+        real3 r21 = r2-r1;
+
+        real r = sqrt(dot(r21,r21));;
+
+        bond bondBuffer;
+        bondBuffer.i = ch.residue()[i  ].atom()[0].getAtomSerial();
+        bondBuffer.j = ch.residue()[i+1].atom()[0].getAtomSerial();
+        bondBuffer.r0=r;
+
+        bondVector.push_back(bondBuffer);
+
+    }}}
+    
+    for(MODEL&   mdl : cargoOut.model()){
+    for(CHAIN&   ch  : mdl.chain()  ){
+    for(uint i=0 ; i<ch.residue().size()-1 ; i++ ){
+        
+        real3 r1 = ch.residue()[i  ].atom()[0].getAtomCoord();
+        real3 r2 = ch.residue()[i+1].atom()[0].getAtomCoord();
+        
+        real3 r21 = r2-r1;
+
+        real r = sqrt(dot(r21,r21));;
+
+        bond bondBuffer;
+        bondBuffer.i = ch.residue()[i  ].atom()[0].getAtomSerial();
+        bondBuffer.j = ch.residue()[i+1].atom()[0].getAtomSerial();
+        bondBuffer.r0=r;
+
+        bondVector.push_back(bondBuffer);
+
+    }}}
+    
+    ////////////////////////////////////////////////
+    
+    //Native contacts
+    
+    std::vector<nativeContact> nc;
+
+    auto& atomContainerOutVector  = containerOut.atom();
+
+    auto nLcontainer = generateNeighbourList(atomContainerOutVector,cutOff);
+
+    for(uint i = 0  ;i<atomContainerOutVector.size();i++){
+    std::cerr << "\r" << "Generating native contacts " << i+1 << "/" << atomContainerOutVector.size()  << std::flush;
+        for(uint j : nLcontainer[i]){
+
+            int iMol = atomContainerOutVector[i].getModelId();
+            int jMol = atomContainerOutVector[j].getModelId();
+
+            std::string chaini = atomContainerOutVector[i].getChainId();
+            std::string chainj = atomContainerOutVector[j].getChainId();
+            
+            int resi_seq = atomContainerOutVector[i].getResSeq();
+            int resj_seq = atomContainerOutVector[j].getResSeq();
+            
+            int iSerial = atomContainerOutVector[i].getAtomSerial();
+            int jSerial = atomContainerOutVector[j].getAtomSerial();
+
+            nativeContact nCbuffer;
+
+            nCbuffer.iMol = iMol;
+            nCbuffer.jMol = jMol;
+            
+            nCbuffer.chi = chaini;
+            nCbuffer.chj = chainj;
+            
+            nCbuffer.resi = resi_seq;
+            nCbuffer.resj = resj_seq;
+            
+            nCbuffer.iSerial = iSerial;
+            nCbuffer.jSerial = jSerial;
+
+            if(iSerial<jSerial){
+                if(iMol==jMol and chaini==chainj ){
+                    if((abs(resi_seq-resj_seq)>2)){
+                        nCbuffer.r0 = atomsDst(atomContainerOutVector[i],atomContainerOutVector[j]);
+                        nCbuffer.e = eIntraContainer;
+                        nc.push_back(nCbuffer);
+                    }
+                } else {
+                    nCbuffer.r0 = atomsDst(atomContainerOutVector[i],atomContainerOutVector[j]);
+                    nCbuffer.e = eInterContainer;
+                    nc.push_back(nCbuffer);
+                }
+
+            }
+        }
+    }
+    
+    auto& atomCargoOutVector  = cargoOut.atom();
+
+    auto nLcargo = generateNeighbourList(atomCargoOutVector,cutOff);
+
+    for(uint i = 0  ;i<atomCargoOutVector.size();i++){
+    std::cerr << "\r" << "Generating native contacts " << i+1 << "/" << atomCargoOutVector.size()  << std::flush;
+        for(uint j : nLcargo[i]){
+
+            int iMol = atomCargoOutVector[i].getModelId();
+            int jMol = atomCargoOutVector[j].getModelId();
+
+            std::string chaini = atomCargoOutVector[i].getChainId();
+            std::string chainj = atomCargoOutVector[j].getChainId();
+            
+            int resi_seq = atomCargoOutVector[i].getResSeq();
+            int resj_seq = atomCargoOutVector[j].getResSeq();
+            
+            int iSerial = atomCargoOutVector[i].getAtomSerial();
+            int jSerial = atomCargoOutVector[j].getAtomSerial();
+
+            nativeContact nCbuffer;
+
+            nCbuffer.iMol = iMol;
+            nCbuffer.jMol = jMol;
+            
+            nCbuffer.chi = chaini;
+            nCbuffer.chj = chainj;
+            
+            nCbuffer.resi = resi_seq;
+            nCbuffer.resj = resj_seq;
+            
+            nCbuffer.iSerial = iSerial;
+            nCbuffer.jSerial = jSerial;
+
+            if(iSerial<jSerial){
+                if(iMol==jMol){
+                    if(chaini==chainj){
+                        if((abs(resi_seq-resj_seq)>2)){
+                            nCbuffer.r0 = atomsDst(atomCargoOutVector[i],atomCargoOutVector[j]);
+                            nCbuffer.e = eIntraCargo;
+                            nc.push_back(nCbuffer);
+                        }
+                    } else {
+                        nCbuffer.r0 = atomsDst(atomCargoOutVector[i],atomCargoOutVector[j]);
+                        nCbuffer.e = eInterCargo;
+                        nc.push_back(nCbuffer);
+                    }
+                } 
+            }
+        }
+    }
+
+    std::cout << std::endl;
+    
+    ////////////////////////////////////////////////
+
+    std::cerr << "Generating exclusion list"  << std::endl;
+
+    std::map<int,std::vector<int>> exclusionsList;
+
+    for(auto& b : bondVector){
+        exclusionsList[b.i].push_back(b.j);
+        exclusionsList[b.j].push_back(b.i);
+    }
+    
+    for(auto& c : nc){
+        exclusionsList[c.iSerial].push_back(c.jSerial);
+        exclusionsList[c.iSerial].push_back(c.jSerial);
+        
+        exclusionsList[c.jSerial].push_back(c.iSerial);
+        exclusionsList[c.jSerial].push_back(c.iSerial);
+    }
+    
+    ////////////////////////////////////////////////
+    
+    std::cerr << "Writing sp file" << std::endl;
+    
+    std::map<std::string,int> type2int;
+    int typeCount = 0;
+
+    std::ofstream sp(outputFileName+".sp");
+    
+    for(uint i = 0  ;i<atomContainerOutVector.size();i++){
+        
+        if(type2int.count(atomContainerOutVector[i].getAtomName())==0){
+           type2int[atomContainerOutVector[i].getAtomName()]=typeCount;
+           typeCount++;
+        }
+        
+        sp << std::left << std::setw(6) 
+           << atomContainerOutVector[i].getAtomCoord() << " " 
+           << real(3.8) << " "
+           << type2int[atomContainerOutVector[i].getAtomName()] << std::endl; 
+    }
+    
+    for(uint i = 0  ;i<atomCargoOutVector.size();i++){
+        
+        if(type2int.count(atomCargoOutVector[i].getAtomName())==0){
+           type2int[atomCargoOutVector[i].getAtomName()]=typeCount;
+           typeCount++;
+        }
+        
+        sp << std::left << std::setw(6) 
+           << atomCargoOutVector[i].getAtomCoord() << " " 
+           << real(3.8) << " "
+           << type2int[atomCargoOutVector[i].getAtomName()] << std::endl; 
+    }
+
+    ////////////////////////////////////////////////
+    
+    std::cerr << "Writing coord file" << std::endl;
+
+    std::ofstream coord(outputFileName+".coord");
+    
+    for(uint i = 0  ;i<atomContainerOutVector.size();i++){
+        
+        coord << std::left << std::setw(6) 
+              << atomContainerOutVector[i].getAtomSerial()<< " " 
+              << atomContainerOutVector[i].getAtomCoord() << std::endl;
+    }
+    
+    for(uint i = 0  ;i<atomCargoOutVector.size();i++){
+        
+        coord << std::left << std::setw(6) 
+              << atomCargoOutVector[i].getAtomSerial()    << " " 
+              << atomCargoOutVector[i].getAtomCoord()     << std::endl;
+    }
+    
+    ////////////////////////////////////////////////
+    
+    std::ofstream topology(outputFileName+".top");
+    
+    ////////////////////////////////////////////////
+    
+    std::cerr << "Writing structure file" << std::endl;
+
+    std::ofstream structure(outputFileName+".struct");
+    
+    topology << "[STRUCTURE]" << std::endl;
+    
+    int chainCount = 0;
+    std::string prevChain = atomContainerOutVector[0].getChainId();
+    
+    for(uint i = 0  ;i<atomContainerOutVector.size();i++){
+        
+        if(prevChain != atomContainerOutVector[i].getChainId()){prevChain=atomContainerOutVector[i].getChainId();
+                                                                chainCount++;}
+        
+        structure << std::left << std::setw(6) 
+                  << atomContainerOutVector[i].getAtomSerial()         << " " 
+                  << std::left << std::setw(6) 
+                  << atomContainerOutVector[i].getAtomName()           << " " 
+                  << std::left << std::setw(6) 
+                  << atomContainerOutVector[i].getResSeq()             << " " 
+                  << std::left << std::setw(6) 
+                  << chainCount                                        << " " 
+                  << std::left << std::setw(6) 
+                  << 0                                                 << std::endl;
+        
+        topology  << std::left << std::setw(6) 
+                  << atomContainerOutVector[i].getAtomSerial()         << " " 
+                  << std::left << std::setw(6) 
+                  << atomContainerOutVector[i].getAtomName()           << " " 
+                  << std::left << std::setw(6) 
+                  << atomContainerOutVector[i].getResSeq()             << " " 
+                  << std::left << std::setw(6) 
+                  << chainCount                                        << " " 
+                  << std::left << std::setw(6) 
+                  << 0                                                 << std::endl;
+    }
+
+    chainCount = 0;
+    prevChain = atomCargoOutVector[0].getChainId();
+
+    int modelCount = 1;
+    int prevModel  = atomCargoOutVector[0].getModelId();
+    
+    for(uint i = 0  ;i<atomCargoOutVector.size();i++){
+        
+        if(prevChain != atomCargoOutVector[i].getChainId()){prevChain=atomCargoOutVector[i].getChainId();
+                                                            chainCount++;}
+        
+        
+        if(prevModel != atomCargoOutVector[i].getModelId()){prevModel=atomCargoOutVector[i].getModelId();
+                                                            modelCount++;
+                                                            chainCount=0;}
+        
+        structure << std::left << std::setw(6) 
+                  << atomCargoOutVector[i].getAtomSerial()         << " " 
+                  << std::left << std::setw(6) 
+                  << atomCargoOutVector[i].getAtomName()           << " " 
+                  << std::left << std::setw(6) 
+                  << atomCargoOutVector[i].getResSeq()             << " " 
+                  << std::left << std::setw(6) 
+                  << chainCount                                    << " " 
+                  << std::left << std::setw(6) 
+                  << modelCount                                    << std::endl;
+        
+        topology  << std::left << std::setw(6) 
+                  << atomCargoOutVector[i].getAtomSerial()         << " " 
+                  << std::left << std::setw(6) 
+                  << atomCargoOutVector[i].getAtomName()           << " " 
+                  << std::left << std::setw(6) 
+                  << atomCargoOutVector[i].getResSeq()             << " " 
+                  << std::left << std::setw(6) 
+                  << chainCount                                    << " " 
+                  << std::left << std::setw(6) 
+                  << modelCount                                    << std::endl;
+    }
+    
+    std::cerr << "Writing SASA file" << std::endl;
+    topology << "[SASA]" << std::endl;
+
+    for(uint i = 0 ; i < atomContainerOutVector.size(); i++){
+        topology  << std::left << std::setw(6)
+                  << atomContainerOutVector[i].getAtomSerial() << " " 
+                  << std::fixed << std::setprecision(6)
+                  << atomContainerOutVector[i].getAtomSASA()   << std::endl;
+    }
+    
+    for(uint i = 0 ; i < atomCargoOutVector.size(); i++){
+        topology  << std::left << std::setw(6)
+                  << atomCargoOutVector[i].getAtomSerial() << " " 
+                  << std::fixed << std::setprecision(6)
+                  << atomCargoOutVector[i].getAtomSASA()   << std::endl;
+    }
+    
+    ////////////////////////////////////////////////
+    
+    std::cerr << "Writing bond file" << std::endl;
+    
+    std::ofstream bonds(outputFileName+".bond");
+    
+    topology << "[SOP_BOND]" << std::endl;
+    
+    bonds << bondVector.size() << std::endl;
+    for(auto& b : bondVector){
+        bonds << std::left << std::setw(6) 
+              << b.i  << " " 
+              << std::left << std::setw(6) 
+              << b.j  << " "
+              << std::fixed << std::setprecision(6)
+              << b.r0 << " "
+              << std::fixed << std::setprecision(6)
+              << K    <<  std::endl;
+        
+        topology << std::left << std::setw(6) 
+                 << b.i  << " " 
+                 << std::left << std::setw(6) 
+                 << b.j  << " "
+                 << std::fixed << std::setprecision(6)
+                 << b.r0 <<  std::endl;
+    }
+    
+    ////////////////////////////////////////////////
+    
+    std::cerr << "Writing native contacts file" << std::endl;
+    
+    std::ofstream NCinner(outputFileName+".nc");
+    std::ofstream NCintra(outputFileName+".nc");
+    
+    topology << "[SOP_NATIVE_CONTACT]" << std::endl;
+    NCinner<< nc.size() << std::endl;
+    for(auto& c : nc){
+
+        NCinner << std::left  << std::setw(6)
+                << c.iSerial  << " " 
+                << std::left  << std::setw(6) 
+                << c.jSerial  << " "
+                << std::fixed << std::setprecision(6)
+                << c.r0       << " "
+                << std::fixed << std::setprecision(6)
+                << c.e        << std::endl;
+        
+        topology << std::left  << std::setw(6)
+                << c.iSerial  << " " 
+                << std::left  << std::setw(6) 
+                << c.jSerial  << " "
+                << std::fixed << std::setprecision(6)
+                << c.r0       << " "
+                << std::fixed << std::setprecision(6)
+                << c.e        << std::endl;
+        
+        /*
+        NCinner << std::left  << std::setw(6)
+                << c.iMol  << " " 
+                << std::left  << std::setw(6) 
+                << c.jMol  << " "
+                << std::left  << std::setw(6) 
+                << c.chi  << " "
+                << std::left  << std::setw(6) 
+                << c.chj  << " "
+                << std::left  << std::setw(6) 
+                << c.resi  << " "
+                << std::left  << std::setw(6) 
+                << c.resj  << " "
+                << std::left  << std::setw(6) 
+                << c.iSerial  << " "
+                << std::left  << std::setw(6) 
+                << c.jSerial  << " "
+                << std::fixed << std::setprecision(6)
+                << c.r0       << " "
+                << std::fixed << std::setprecision(6)
+                << c.e        << std::endl;
+                */
+    }                              
+    
+    ////////////////////////////////////////////////
+    
+    std::cerr << "Writing exclusions file" << std::endl;
+                                   
+    std::ofstream excl(outputFileName+".excl");
+    
+    uint nExclusions=0;
+    uint maxExclusion=0;
+    for(auto& E : exclusionsList){
+        std::sort(E.second.begin(),E.second.end());
+        E.second.erase(std::unique(E.second.begin(),E.second.end()),E.second.end());
+        nExclusions+=E.second.size();
+        if(E.second.size()>maxExclusion){
+            maxExclusion=E.second.size();
+        }
+    }
+    
+    topology << "[SOP_EXCLUSIONS]" << std::endl;
+    excl << nExclusions << " " << maxExclusion << std::endl;
+    for(auto& E : exclusionsList){
+        excl << E.first << " ";
+        topology << E.first << " ";
+        
+        for(auto& e : E.second){
+            excl << std::left << std::setw(6) << e << " ";
+            topology << std::left << std::setw(6) << e << " ";
+        }
+
+        excl << std::endl;
+        topology << std::endl;
+    }
+    
+    ////////////////////////////////////////////////
+
+    /*
+    std::cerr << "Writing pairs file" << std::endl;
+                                   
+    std::ofstream pairs(outputFileName+".pairs");
+    
+    for(uint i = 0   ;i<atomContainerOutVector.size();i++){
+    for(uint j = i+1 ;j<atomContainerOutVector.size();j++){
+        
+        int iSerial =atomContainerOutVector[i].getAtomSerial();
+        int jSerial =atomContainerOutVector[j].getAtomSerial();
+
+        auto& excList_i = exclusionsList[iSerial];
+        if(!(std::find(excList_i.begin(),excList_i.end(),jSerial) != excList_i.end())){
+            pairs << iSerial << " " << jSerial << std::endl;
+        }
+    }}*/
+}
